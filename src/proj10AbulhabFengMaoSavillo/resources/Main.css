@@ -1,0 +1,81 @@
+/*
+ * File: Main.css
+ * F18 CS361 Project 7
+ * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
+ * Cascading Style Sheet for Main.java, defining the design styles of the GUI elements
+ * Date: 10/27/2018
+ */
+
+
+#scanButton {
+    -fx-font: 13 arial;
+    -fx-base: paleTurquoise;
+    -fx-background-radius: 100;
+}
+
+#compileButton {
+    -fx-font: 13 arial;
+    -fx-base: paleTurquoise;
+    -fx-background-radius: 100;
+}
+
+#compileRunButton {
+    -fx-font: 13 arial;
+    -fx-base: PaleGreen;
+    -fx-background-radius: 100;
+}
+
+#stopButton {
+    -fx-font: 13 arial;
+    -fx-base: lightpink;
+    -fx-background-radius: 100;
+}
+
+/* style of keywords */
+.keyword {
+    -fx-fill: purple;
+    -fx-font-weight: bold;
+}
+
+/* style of semicolons */
+.semicolon {
+    -fx-font-weight: bold;
+}
+
+/* style of parenthesis */
+.paren {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+/* style of brackets */
+.bracket {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+/* style of braces */
+.brace {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+/* style of strings */
+.string {
+    -fx-fill: blue;
+}
+
+/* style of integers */
+.integer{
+    -fx-fill: firebrick;
+}
+
+/* style of comments */
+.comment {
+	-fx-fill: cadetblue;
+}
+
+/* style of paragraph boxes */
+.paragraph-box:has-caret {
+    -fx-background-color: #f2f9fc;
+}

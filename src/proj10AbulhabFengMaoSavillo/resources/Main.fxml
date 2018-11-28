@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--File: Main.fxml-->
+<!--F18 CS361 Project 10-->
+<!--Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo-->
+<!--FXML file, laying out GUI elements of Main.java-->
+<!--Date: 12/7/2018-->
+
+<!--imported packages-->
+<?import proj10AbulhabFengMaoSavillo.JavaTabPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.layout.VBox?>
+<?import org.fxmisc.flowless.VirtualizedScrollPane?>
+<?import org.fxmisc.richtext.StyleClassedTextArea?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.RadioMenuItem?>
+
+<VBox fx:id="VBox" stylesheets="@Main.css" xmlns="http://javafx.com/javafx/8.0.172-ea"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="proj10AbulhabFengMaoSavillo.controllers.Controller">
+    <MenuBar VBox.vgrow="NEVER">
+        <Menu fx:id="fileMenu" text="File">
+            <MenuItem fx:id="aboutMenuItem" onAction="#handleAboutAction" text="About..."/>
+            <SeparatorMenuItem/>
+            <MenuItem fx:id="newMenuItem" accelerator="Shortcut+N" onAction="#handleNewAction" text="New"/>
+            <MenuItem fx:id="openMenuItem" accelerator="Shortcut+O" onAction="#handleOpenAction" text="Open..."/>
+            <MenuItem fx:id="closeMenuItem" accelerator="Shortcut+W" onAction="#handleCloseAction" text="Close"/>
+            <MenuItem fx:id="saveMenuItem" accelerator="Shortcut+S" onAction="#handleSaveAction" text="Save"/>
+            <MenuItem fx:id="saveAsMenuItem" accelerator="Shortcut+Shift+S" onAction="#handleSaveAsAction"
+                      text="Save as..."/>
+            <SeparatorMenuItem/>
+            <MenuItem fx:id="exitMenuItem" accelerator="Shortcut+Shift+W" onAction="#handleExitAction" text="Exit"/>
+        </Menu>
+        <Menu fx:id="editMenu" text="Edit">
+            <MenuItem fx:id="undoMenuItem" accelerator="Shortcut+Z" onAction="#handleEditMenuAction" text="Undo"/>
+            <MenuItem fx:id="redoMenuItem" accelerator="Shortcut+Y" onAction="#handleEditMenuAction" text="Redo"/>
+            <MenuItem fx:id="cutMenuItem" accelerator="Shortcut+X" onAction="#handleEditMenuAction" text="Cut"/>
+            <MenuItem fx:id="copyMenuItem" accelerator="Shortcut+C" onAction="#handleEditMenuAction" text="Copy"/>
+            <MenuItem fx:id="pasteMenuItem" accelerator="Shortcut+V" onAction="#handleEditMenuAction" text="Paste"/>
+            <MenuItem fx:id="selectMenuItem" accelerator="Shortcut+A" onAction="#handleEditMenuAction"
+                      text="Select all"/>
+            <MenuItem fx:id="tabMenuItem" onAction="#handleEditMenuAction" text="Indent Selection"/>
+            <MenuItem fx:id="untabMenuItem" onAction="#handleEditMenuAction" text="Unindent Selection"/>
+            <MenuItem fx:id="commentMenuItem" accelerator="Shortcut+/" onAction="#handleEditMenuAction"
+                      text="Comment/Uncomment Selection"/>
+            <MenuItem fx:id="findReplaceMenuItem" accelerator="Shortcut+F"
+                      onAction="#handleFindReplace" text="Find and Replace"/>
+        </Menu>
+        <Menu fx:id="preferencesMenu" text="Preferences">
+            <Menu fx:id="colorPreferenceMenu" text="Color Preference">
+                <MenuItem text="Keyword" fx:id="keywordsPreItem" onAction="#handleKeywordColorAction"/>
+                <MenuItem text="Parentheses/Brackets" fx:id="parenPreItem" onAction="#handleParenColorAction"/>
+                <MenuItem text="String" fx:id="strPreItem" onAction="#handleStrColorAction"/>
+                <MenuItem text="Integer" fx:id="intPreItem" onAction="#handleIntColorAction"/>
+            </Menu>
+            <Menu text="Mode">
+                <fx:define>
+                    <ToggleGroup fx:id="themeToggle"/>
+                </fx:define>
+                <RadioMenuItem text="Light" fx:id="lightThemeMenuItem" onAction="#handlePreferencesMenuAction" toggleGroup="$themeToggle" selected="true"/>
+                <RadioMenuItem text="Dark" fx:id="darkThemeMenuItem" onAction="#handlePreferencesMenuAction" toggleGroup="$themeToggle"/>
+                <RadioMenuItem text="Halloween" fx:id="halloweenThemeMenuItem" onAction = "#handlePreferencesMenuAction" toggleGroup="$themeToggle"/>
+            </Menu>
+        </Menu>
+
+    </MenuBar>
+    <ToolBar VBox.vgrow="ALWAYS">
+        <Button fx:id="scanButton" onAction="#handleScanButtonAction" text="Scan"/>
+        <Separator maxWidth="25" minWidth="25"/>
+        <CheckBox fx:id="checkBox" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Display File Structure/Directory"/>
+    </ToolBar>
+    <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.25" prefHeight="1581.0" prefWidth="5387.0"
+               VBox.vgrow="ALWAYS">
+        <SplitPane fx:id="verticalSplitPane" dividerPositions="0.5" orientation="VERTICAL" SplitPane.resizableWithParent="false">
+            <items>
+                <TreeView fx:id="directoryTreeView" prefHeight="200.0" prefWidth="200.0"/>
+                <TreeView fx:id="structureTreeView" editable="true" onMouseClicked="#handleTreeItemClicked" prefHeight="200.0"
+                          prefWidth="200.0"/>
+            </items>
+        </SplitPane>
+        <SplitPane dividerPositions="0.75" orientation="VERTICAL" prefHeight="329.0" prefWidth="416.0">
+            <JavaTabPane fx:id="javaTabPane" VBox.vgrow="ALWAYS">
+                <tabs>
+                </tabs>
+            </JavaTabPane>
+            <VirtualizedScrollPane SplitPane.resizableWithParent="false">
+                <content>
+                    <StyleClassedTextArea fx:id="console"/>
+                </content>
+            </VirtualizedScrollPane>
+        </SplitPane>
+    </SplitPane>
+</VBox>
