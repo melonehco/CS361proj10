@@ -582,23 +582,14 @@ public class Scanner
         //check whether int is too long
         try
         {
-            int value = Integer.parseInt(spellingBuilder.toString());
-            if (value < 0)
-            {
-                this.errorHandler.register(Error.Kind.LEX_ERROR,
-                                           this.sourceFile.getFilename(),
-                                           this.sourceFile.getCurrentLineNumber(),
-                                           "Integer exceeds maximum value");
-                kind = Token.Kind.ERROR;
-
-            }
+            Integer.parseInt(spellingBuilder.toString());
         }
         catch (NumberFormatException e)
         {
             this.errorHandler.register(Error.Kind.LEX_ERROR,
                                        this.sourceFile.getFilename(),
                                        this.sourceFile.getCurrentLineNumber(),
-                                       "Integer constant cannot be parsed");
+                                       "Invalid integer constant");
             kind = Token.Kind.ERROR;
         }
 
@@ -629,14 +620,5 @@ public class Scanner
         this.buffer.add(this.currentChar);
 
         return new Token(Token.Kind.IDENTIFIER, spellingBuilder.toString(), lineNumber);
-    }
-
-    /**
-     * Returns the errors registered by the associated ErrorHandler
-     * @return the error list
-     */
-    public List<Error> getErrorList()
-    {
-        return this.errorHandler.getErrorList();
     }
 }
