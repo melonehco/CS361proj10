@@ -139,7 +139,8 @@ public class ToolBarController
 
             // Request that the filemenucontroller create a new tab in which to print
             JavaCodeArea outputArea = requestAreaForOutput();
-            Scanner scanner = new Scanner(file.getAbsolutePath(), new ErrorHandler());
+            ErrorHandler errorHandler = new ErrorHandler();
+            Scanner scanner = new Scanner(file.getAbsolutePath(), errorHandler);
 
             Task task = new Task()
             {
@@ -157,7 +158,7 @@ public class ToolBarController
 
                     outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
 
-                    List<Error> errorList = scanner.getErrorList();
+                    List<Error> errorList = errorHandler.getErrorList();
                     int errorCount = errorList.size();
                     if (errorCount == 0)
                     {
