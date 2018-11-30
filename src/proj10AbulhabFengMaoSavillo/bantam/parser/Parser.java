@@ -146,17 +146,76 @@ public class Parser
 	}
 
 
-//    /* Fields and Methods
-//     * <Member> ::= <Field> | <Method>
-//     * <Method> ::= <Type> <Identifier> ( <Parameters> ) <Block>
-//     * <Field> ::= <Type> <Identifier> <InitialValue> ;
-//     * <InitialValue> ::= EMPTY | = <Expression>
-//     */
-//     private Member parseMember() { }
-//
-//
-//    //-----------------------------------
-//
+    /* Fields and Methods
+     * <Member> ::= <Field> | <Method>
+     * <Method> ::= <Type> <Identifier> ( <Parameters> ) <Block>
+     * <Field> ::= <Type> <Identifier> <InitialValue> ;
+     * <InitialValue> ::= EMPTY | = <Expression>
+     */
+     private Member parseMember()
+     {
+    	 int position = currentToken.position;
+    	 String type = this.parseType();
+    	 String nameIdentifier = this.parseIdentifier();
+    	 Member member = null;
+    	 
+    	 //if member matches form for a method
+    	 if (this.currentToken.kind == LPAREN)
+    	 {
+    		 FormalList params = this.parseParameters();
+    		 BlockStmt block = (BlockStmt) this.parseBlock();
+    		 StmtList blockStmts = block.getStmtList();
+    		 
+    		 //check for closing parenthesis
+    		 if (this.currentToken.kind != RPAREN)
+    		 {
+    			 //TODO: error: Missing closing parenthesis.
+    		 }
+    		 else //if present, move on to next token
+    		 {
+    			 this.currentToken = scanner.scan();
+    		 }
+    		 
+    		 member = new Method(position, type, nameIdentifier,
+                     				params, blockStmts);
+    	 }
+    	 else //otherwise parse member as field
+    	 {
+    		 if (this.currentToken.kind == SEMICOLON)
+    		 {
+    			 //TODO: is it okay to have null for an empty init value?
+    			 //empty initial value
+    			 member = new Field(position, type, nameIdentifier, null);
+    		 }
+    		 else if (this.currentToken.kind == ASSIGN)
+    		 {
+    			 //non-empty initial value
+    			 scanner.scan(); //read past =
+    			 Expr initValueExpr = this.parseExpression();
+    			 
+    			 //check for semicolon
+    			 if (this.currentToken.kind != SEMICOLON)
+    			 {
+    				 //TODO: error: Missing ending semicolon.
+    			 }
+    			 else
+    			 {
+    				 member = new Field(position, type, nameIdentifier, initValueExpr);
+    			 }
+    		 }
+    		 else
+    		 {
+    			 //invalid syntax
+    			 //TODO: error: Invalid field initialization.
+    		 }
+    	 }
+    	 
+    	 return member;
+     }
+
+
+    //-----------------------------------
+
 //    /* Statements
 //     *  <Stmt> ::= <WhileStmt> | <ReturnStmt> | <BreakStmt> | <DeclStmt>
 //     *              | <ExpressionStmt> | <ForStmt> | <BlockStmt> | <IfStmt>
@@ -256,24 +315,24 @@ public class Parser
 //     * <OptionalAssignment> ::= EMPTY | = <Expression>
 //     */
 //	private Expr parseExpression() { }
-//
-//
-//    /*
-//	 * <LogicalOR> ::= <logicalAND> <LogicalORRest>
-//     * <LogicalORRest> ::= EMPTY |  || <LogicalAND> <LogicalORRest>
-//     */
-//	private Expr parseOrExpr() {
-//        int position = currentToken.position;
-//
-//        Expr left = parseAndExpr();
-//        while (this.currentToken.spelling.equals("||")) {
-//            this.currentToken = scanner.scan();
-//            Expr right = parseAndExpr();
-//            left = new BinaryLogicOrExpr(position, left, right);
-//        }
-//
-//        return left;
-//	}
+
+
+    /*
+	 * <LogicalOR> ::= <logicalAND> <LogicalORRest>
+     * <LogicalORRest> ::= EMPTY |  || <LogicalAND> <LogicalORRest>
+     */
+	private Expr parseOrExpr() {
+        int position = currentToken.position;
+
+        Expr left = parseAndExpr();
+        while (this.currentToken.spelling.equals("||")) {
+            this.currentToken = scanner.scan();
+            Expr right = parseAndExpr();
+            left = new BinaryLogicOrExpr(position, left, right);
+        }
+
+        return left;
+	}
 
 
 //    /*
