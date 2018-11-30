@@ -205,9 +205,8 @@ public class Parser
     	 //if member matches form for a method
     	 if (this.currentToken.kind == LPAREN)
     	 {
+    		 scanner.scan();
     		 FormalList params = this.parseParameters();
-    		 BlockStmt block = (BlockStmt) this.parseBlock();
-    		 StmtList blockStmts = block.getStmtList();
 
     		 //check for closing parenthesis
     		 if (this.currentToken.kind != RPAREN)
@@ -218,6 +217,9 @@ public class Parser
     		 {
     			 this.currentToken = scanner.scan();
     		 }
+
+    		 BlockStmt block = (BlockStmt) this.parseBlock();
+    		 StmtList blockStmts = block.getStmtList();
 
     		 member = new Method(position, type, nameIdentifier,
                      				params, blockStmts);
