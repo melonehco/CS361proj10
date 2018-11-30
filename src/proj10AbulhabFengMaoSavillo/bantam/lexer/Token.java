@@ -20,36 +20,46 @@
  import java.util.Collections;
  import java.util.Arrays;
 
+
  public class Token
  {
+     private static Set<String> reservedWords = Collections.unmodifiableSet(
+             new HashSet<>(Arrays.asList("break", "cast", "class", "var",
+                                         "else", "extends", "for", "if", "instanceof", "new", "return", "while")));
      //instance variables
      public Kind kind;
      public String spelling; // the actual sequence of chars in the token
      public int position; // the line number where the token was found
 
-     public String getSpelling() {
-         return spelling;
-     }
-
 
      //constructor
-     Token(Kind kind, String spelling, int position) {
+     Token(Kind kind, String spelling, int position)
+     {
          this.spelling = spelling;
          this.position = position;
 
          //patch the kind in the case of boolean constants and keywords
-         if (kind == Kind.IDENTIFIER && (spelling.equals("true") || spelling.equals("false"))) {
+         if (kind == Kind.IDENTIFIER && (spelling.equals("true") || spelling.equals("false")))
+         {
              this.kind = Kind.BOOLEAN;
          }
-         else if (kind == Kind.IDENTIFIER && reservedWords.contains(spelling)) {
+         else if (kind == Kind.IDENTIFIER && reservedWords.contains(spelling))
+         {
              this.kind = Enum.valueOf(Kind.class, spelling.toUpperCase());
          }
-         else {
+         else
+         {
              this.kind = kind;
          }
      }
 
-     public String toString() {
+     public String getSpelling()
+     {
+         return spelling;
+     }
+
+     public String toString()
+     {
          return "Token: Kind=" + kind.name() + ", spelling=" + spelling + ", " +
                  "position=" + position;
      }
@@ -78,10 +88,6 @@
          BREAK, CAST, CLASS, VAR, ELSE, EXTENDS, FOR, IF, INSTANCEOF, NEW,
          RETURN, WHILE
      }
-
-     private static Set<String> reservedWords = Collections.unmodifiableSet(
-             new HashSet<>(Arrays.asList("break", "cast", "class", "var",
-                     "else", "extends", "for", "if", "instanceof", "new", "return", "while")));
  }
 
 	

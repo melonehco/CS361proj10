@@ -70,3 +70,4 @@ the file and either the error messages when the file was scanned and parsed or a
 and parsing were successful for that file.
 
 -_INTERNAL_-
+•  Possibility of using visitors to handle errors?
