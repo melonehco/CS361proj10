@@ -1,3 +1,4 @@
+_DALE'S COMMENTS_
 [COMPLETED]•  Minor problems (no points taken off this time):
     [COMPLETED]◦     Your completeIntConstToken method, near the end, parses the string and tests whether the resulting
         value is negative. How can the value be negative? Can you give me an example of a string of integers
@@ -18,3 +19,54 @@ this.currentChar at the end of the scan() method is always the first character o
 (that is, that part of the source file after the previous Token was returned). So make sure that, before
 scan() returns a Token, it has advanced currentChar to the first char after the Token being returned.
 
+_PROJECT 10_
+•  Make sure your scanner is working perfectly.
+
+•  In the Bantam Java Manual, read Section 4.1 and the parts of Section 4.2 concerning the ErrorHandler,
+the Abstract syntax tree, and the AST subclasses. Also read all of Chapter 6.
+
+•  I am providing you with some more classes (a zip file) that I want you to add to your project. The contents
+of the zip file are Parser.java, an ast package with all the subclasses of ASTNode that make up
+the nodes of the AST, and a treedrawer package containing classes for drawing a picture of your AST. Note
+that the Parser.java file belongs in a bantam.parser package.
+
+•  Your task will be to fill in the bodies of all of the methods in Parser.java. I have
+given you some or all of the bodies of three of the Parser's methods: parseProgram,
+ParseOrExpr, and parseStatement to get you started. Be sure to study those methods to understand what they are doing.
+
+•  Other than adding "proj10your-last-names" to the front of the package in the package statement
+in each file, do not modify any of the files that I am giving you except the Parser.java
+file. You are, of course, allowed to add additional methods to Parser.java and add
+additional files and classes, if appropriate, to make your design more elegant.
+
+•  Add a second button to the toolbar whose text is "Scan & parse". When it is clicked,
+a Scanner object and a Parser object should be built and the Parser.parse() method
+should be called to parse the contents of the selected tab.
+
+•  If the selected tab's current contents haven't been saved to a file, then before
+parsing and checking, your program should bring up a dialog, as was done in Project 9,
+asking the user if they want to save the tab's contents.
+
+•  If one or more errors occur--during either the scanning or the parsing--an error
+message should appear in the console giving information on at least one of the errors that was found.
+
+•  If there are no errors during the parse, the parse() method should return an AST. That
+AST should then be drawn in a new separate window, using the treedrawer package. Also,
+a message should be written to the console saying that scanning and parsing was completed successfully.
+
+•  Note that the treedrawer package draws a window using the Java Swing framework instead of
+the JavaFX framework. To draw an AST, you need only create a Drawer object and call its draw() method.
+
+•  Note also that the new tab displaying all the tokens that the preceding project created
+should not be created by the Scan & parse button.
+
+•  For testing purposes, I would like you to create a file named "ParserTest<your-last-names>.btm" that
+should contain a legal Bantam source program that tests all of the Bantam syntax rules.
+
+•  Also, add a main method to your Parser.java file for testing purposes. It should take any
+number of command line arguments. Those arguments should be names of files. The main method should
+loop through the files, parsing each one, and printing to System.out the result, namely the name of
+the file and either the error messages when the file was scanned and parsed or a message that scanning
+and parsing were successful for that file.
+
+_INTERNAL_
