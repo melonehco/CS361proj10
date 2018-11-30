@@ -28,6 +28,7 @@ public class Parser
     private Scanner scanner;
     private Token currentToken; // the lookahead token
     private ErrorHandler errorHandler;
+    private String filename;
 
     // constructor
     public Parser(ErrorHandler errorHandler) {
@@ -96,7 +97,7 @@ public class Parser
     public Program parse(String filename) {
 		scanner.setSourceFile(filename);
 		currentToken = scanner.scan();
-		System.out.println(currentToken);
+		this.filename = filename;
 		return(parseProgram());
     }
 
@@ -123,26 +124,34 @@ public class Parser
      * <MemberList> ::= EMPTY | <Member> <MemberList>
      */
     private Class_ parseClass() {
+        int position = currentToken.position;
+        String className = "";
+        String parent = "";
+        MemberList memberList = new MemberList(position);
+        currentToken=scanner.scan();
 
-		int position = currentToken.position;
-    	String className= "";
-    	String parent = "";
-    	MemberList memberList = new MemberList(position);
-    	if(currentToken.kind == IDENTIFIER){
-    		className = currentToken.spelling;
-		}
-		this.currentToken = scanner.scan();
-    	if (currentToken.kind == EXTENDS){
-			currentToken = scanner.scan();
-			if(currentToken.kind == IDENTIFIER){
-				parent = currentToken.spelling;
-			}
-		}
+        while (currentToken.kind==CLASS) {
+            currentToken=scanner.scan();
+            position = currentToken.position;
+            if (currentToken.kind == IDENTIFIER) {
+                className = currentToken.spelling;
+            }
+            this.currentToken = scanner.scan();
+            if (currentToken.kind == EXTENDS) {
+                currentToken = scanner.scan();
+                if (currentToken.kind == IDENTIFIER) {
+                    parent = currentToken.spelling;
+                }
+            }
 
-		System.out.println("class name"+className);
+            Class_ class_ = new Class_(position, this.filename, className, parent, memberList);
+            System.out.println(class_.getFilename());
+            System.out.println(class_.getName());
+            System.out.println(class_.getParent());
+            System.out.println(class_.getMemberList());
 
-		return new Class_(position,className,className,parent,memberList);
-
+        }
+        return new Class_(position, className, className, parent, memberList);
 	}
 
 
