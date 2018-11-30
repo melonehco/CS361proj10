@@ -389,58 +389,88 @@ public class Parser
 //	 * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
 //     */
 //	private Expr parseNewCastOrUnary() { }
-//
-//
-//    /*
-//	 * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
-//     */
-//	private Expr parseNew() { }
-//
-//
-//    /*
-//	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
-//     */
-//	private Expr parseCast() { }
-//
-//
-//    /*
-//	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
-//     * <PrefixOp> ::= - | ! | ++ | --
-//     */
-//	private Expr parseUnaryPrefix() { }
-//
-//
-//    /*
-//	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
-//     * <PostfixOp> ::= ++ | -- | EMPTY
-//     */
-//	private Expr parseUnaryPostfix() { }
-//
-//
-//    /*
-//	 * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
-//     *                               <StringConst> | <VarExpr> | <DispatchExpr>
-//     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
-//     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
-//     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
-//     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
-//     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
-//     */
-//	private Expr parsePrimary() { }
-//
-//
-//    /*
-//	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
-//     * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
-//     */
-//	private ExprList parseArguments() { }
-//
-//
-//    /*
-//	 * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
-//     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
-//     */
-//	private FormalList parseParameters() { }
+
+
+    /*
+	 * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
+     */
+	private Expr parseNew()
+	{ 
+		int position = currentToken.position;
+		Expr result = null;
+		
+		scanner.scan();
+		String type = this.parseIdentifier();
+		
+		if (this.currentToken.kind == LPAREN)
+		{
+			//new object
+			result = new NewExpr(position, type);
+			
+			//check for closing parenthesis
+			if (this.currentToken.kind != RPAREN)
+			{
+				//TODO: error
+			}
+		}
+		else if (this.currentToken.kind == LBRACKET)
+		{
+			//new array
+			
+		}
+		else
+		{
+			//TODO: error: "Invalid new expression"
+		}
+		
+		return result;
+	}
+
+
+    /*
+	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
+     */
+	private Expr parseCast() { }
+
+
+    /*
+	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
+     * <PrefixOp> ::= - | ! | ++ | --
+     */
+	private Expr parseUnaryPrefix() { }
+
+
+    /*
+	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
+     * <PostfixOp> ::= ++ | -- | EMPTY
+     */
+	private Expr parseUnaryPostfix() { }
+
+
+    /*
+	 * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
+     *                               <StringConst> | <VarExpr> | <DispatchExpr>
+     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
+     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
+     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
+     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
+     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
+     */
+	private Expr parsePrimary() { }
+
+
+    /*
+	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
+     * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
+     */
+	private ExprList parseArguments() { }
+
+
+    /*
+	 * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
+     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
+     */
+	private FormalList parseParameters() { }
 //
 //
 //    /*
