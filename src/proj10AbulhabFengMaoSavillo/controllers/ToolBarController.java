@@ -186,6 +186,14 @@ public class ToolBarController
     }
 
     /**
+     * TODO doc
+     */
+    public void handleScanAndParseButtonAction(Event event, File file)
+    {
+        this.handleScanButtonAction(event, file);
+    }
+
+    /**
      * Request a new tab be made
      *
      * @return the code area in the newly made tab

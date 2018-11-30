@@ -74,6 +74,7 @@
     </MenuBar>
     <ToolBar VBox.vgrow="ALWAYS">
         <Button fx:id="scanButton" onAction="#handleScanButtonAction" text="Scan"/>
+        <Button fx:id="scanAndParseButton" onAction="#handleScanAndParseButtonAction" text="Scan n' Parse"/>
         <Separator maxWidth="25" minWidth="25"/>
         <CheckBox fx:id="checkBox" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Display File Structure/Directory"/>
     </ToolBar>
