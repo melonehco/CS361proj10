@@ -41,6 +41,17 @@ public class Parser
     }
 
     /**
+     * Eats comments
+     */
+    private void advancePastCommentary()
+    {
+        while (this.currentToken.kind == COMMENT)
+        {
+            this.currentToken = this.scanner.scan();
+        }
+    }
+
+    /**
      * Test code for Parser
      */
     public static void main(String[] args)
@@ -94,6 +105,22 @@ public class Parser
     }
 
     /**
+     * Parsing Error occurred!
+     *
+     * @param errorMessage
+     * @throws CompilationException
+     */
+    private void whinge(String errorMessage)
+            throws CompilationException
+    {
+        this.errorHandler.register(Error.Kind.PARSE_ERROR,
+                                   this.filename,
+                                   this.currentToken.position,
+                                   errorMessage);
+        throw new CompilationException(String.format("Compilation Exception: %s", errorMessage));
+    }
+
+    /**
      * parse the given file and return the root node of the AST
      *
      * @param filename The name of the Bantam Java file to be parsed
@@ -101,8 +128,8 @@ public class Parser
      */
     public Program parse(String filename)
     {
-        scanner.setSourceFile(filename);
-        currentToken = scanner.scan();
+        this.scanner.setSourceFile(filename);
+        this.currentToken = scanner.scan();
         this.filename = filename;
         return (parseProgram());
     }
@@ -113,7 +140,8 @@ public class Parser
      */
     private Program parseProgram()
     {
-        int position = currentToken.position;
+        this.advancePastCommentary();
+        int position = this.currentToken.position;
         ClassList classList = new ClassList(position);
 
         while (currentToken.kind != EOF)
@@ -133,42 +161,51 @@ public class Parser
      */
     private Class_ parseClass()
     {
-        int initialPosition = currentToken.position;
+        this.advancePastCommentary();
+        int initialPosition = this.currentToken.position;
         String className = "";
         String parent = "";
         MemberList memberList = new MemberList(initialPosition);
-        currentToken = scanner.scan();
 
-        while (currentToken.kind == CLASS)
+        if (this.currentToken.kind == CLASS)
         {
-            initialPosition = currentToken.position;
-            currentToken = scanner.scan();
-            if (currentToken.kind == IDENTIFIER)
+            this.currentToken = this.scanner.scan();
+            if (this.currentToken.kind == IDENTIFIER)
             {
-                className = currentToken.spelling;
+                className = this.currentToken.spelling;
             }
             else
-            this.currentToken = scanner.scan();
-            if (currentToken.kind == EXTENDS)
             {
-                currentToken = scanner.scan();
-                if (currentToken.kind == IDENTIFIER)
+                //TODO error
+            }
+
+            this.currentToken = scanner.scan();
+            if (this.currentToken.kind == EXTENDS)
+            {
+                this.currentToken = scanner.scan();
+                if (this.currentToken.kind == IDENTIFIER)
                 {
-                    parent = currentToken.spelling;
+                    parent = this.currentToken.spelling;
+                    this.currentToken = scanner.scan();
+                }
+                else
+                {
+                    //TODO error
                 }
             }
-            this.currentToken = scanner.scan();
+
             if (this.currentToken.kind != LCURLY)
             {
-                this.errorHandler.register(Error.Kind.PARSE_ERROR, this.filename, this.currentToken.position,
-                                           "Expecting left brace.");
+                this.whinge("Expecting left brace.");
             }
-            this.currentToken = scanner.scan();
+
             while (this.currentToken.kind != RCURLY)
             {
                 Member member = parseMember();
                 memberList.addElement(member);
             }
+
+            this.currentToken = this.scanner.scan();
 
             Class_ class_ = new Class_(initialPosition, this.filename, className, parent, memberList);
             System.out.println(class_.getFilename());
@@ -180,14 +217,6 @@ public class Parser
 
         return new Class_(initialPosition, className, className, parent, memberList);
     }
-
-    /* Fields and Methods
-     * <Member> ::= <Field> | <Method>
-     * <Method> ::= <Type> <Identifier> ( <Parameters> ) <Block>
-     * <Field> ::= <Type> <Identifier> <InitialValue> ;
-     * <InitialValue> ::= EMPTY | = <Expression>
-     */
-     private Member parseMember() { }
 
     /* Fields and Methods
      * <Member> ::= <Field> | <Method>
@@ -261,105 +290,105 @@ public class Parser
 
     //-----------------------------------
 
-//    /* Statements
-//     *  <Stmt> ::= <WhileStmt> | <ReturnStmt> | <BreakStmt> | <DeclStmt>
-//     *              | <ExpressionStmt> | <ForStmt> | <BlockStmt> | <IfStmt>
-//     */
-//     private Stmt parseStatement() {
-//            Stmt stmt;
-//
-//            switch (currentToken.kind) {
-//                case IF:
-//                    stmt = parseIf();
-//                    break;
-//                case LCURLY:
-//                    stmt = parseBlock();
-//                    break;
-//                case VAR:
-//                    stmt = parseDeclStmt();
-//                    break;
-//                case RETURN:
-//                    stmt = parseReturn();
-//                    break;
-//                case FOR:
-//                    stmt = parseFor();
-//                    break;
-//                case WHILE:
-//                    stmt = parseWhile();
-//                    break;
-//                case BREAK:
-//                    stmt = parseBreak();
-//                    break;
-//                default:
-//                    stmt = parseExpressionStmt();
-//            }
-//
-//            return stmt;
-//    }
-//
-//
-//    /*
-//     * <WhileStmt> ::= WHILE ( <Expression> ) <Stmt>
-//     */
-//    private Stmt parseWhile() { }
-//
-//
-//    /*
-//     * <ReturnStmt> ::= RETURN <Expression> ; | RETURN ;
-//     */
-//	private Stmt parseReturn() { }
-//
-//
-//    /*
-//	 * BreakStmt> ::= BREAK ;
-//     */
-//	private Stmt parseBreak() { }
-//
-//
-//    /*
-//	 * <ExpressionStmt> ::= <Expression> ;
-//     */
-//	private ExprStmt parseExpressionStmt() { }
-//
-//
-//    /*
-//	 * <DeclStmt> ::= VAR <Identifier> = <Expression> ;
-//     * every local variable must be initialized
-//     */
-//	private Stmt parseDeclStmt() { }
-//
-//
-//    /*
-//	 * <ForStmt> ::= FOR ( <Start> ; <Terminate> ; <Increment> ) <STMT>
-//     * <Start>     ::= EMPTY | <Expression>
-//     * <Terminate> ::= EMPTY | <Expression>
-//     * <Increment> ::= EMPTY | <Expression>
-//     */
-//	private Stmt parseFor() { }
-//
-//
-//    /*
-//	 * <BlockStmt> ::= { <Body> }
-//     * <Body> ::= EMPTY | <Stmt> <Body>
-//     */
-//	private Stmt parseBlock() { }
-//
-//
-//    /*
-//	 * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
-//     */
-//	private Stmt parseIf() { }
-//
-//
-//    //-----------------------------------------
-//    // Expressions
-//    //Here we introduce the precedence to operations
-//
-//    /*
-//	 * <Expression> ::= <LogicalOrExpr> <OptionalAssignment>
-//     * <OptionalAssignment> ::= EMPTY | = <Expression>
-//     */
-//	private Expr parseExpression() { }
+    /* Statements
+     *  <Stmt> ::= <WhileStmt> | <ReturnStmt> | <BreakStmt> | <DeclStmt>
+     *              | <ExpressionStmt> | <ForStmt> | <BlockStmt> | <IfStmt>
+     */
+     private Stmt parseStatement() {
+            Stmt stmt;
+
+            switch (currentToken.kind) {
+                case IF:
+                    stmt = parseIf();
+                    break;
+                case LCURLY:
+                    stmt = parseBlock();
+                    break;
+                case VAR:
+                    stmt = parseDeclStmt();
+                    break;
+                case RETURN:
+                    stmt = parseReturn();
+                    break;
+                case FOR:
+                    stmt = parseFor();
+                    break;
+                case WHILE:
+                    stmt = parseWhile();
+                    break;
+                case BREAK:
+                    stmt = parseBreak();
+                    break;
+                default:
+                    stmt = parseExpressionStmt();
+            }
+
+            return stmt;
+    }
+
+
+    /*
+     * <WhileStmt> ::= WHILE ( <Expression> ) <Stmt>
+     */
+    private Stmt parseWhile() { }
+
+
+    /*
+     * <ReturnStmt> ::= RETURN <Expression> ; | RETURN ;
+     */
+	private Stmt parseReturn() { }
+
+
+    /*
+	 * BreakStmt> ::= BREAK ;
+     */
+	private Stmt parseBreak() { }
+
+
+    /*
+	 * <ExpressionStmt> ::= <Expression> ;
+     */
+	private ExprStmt parseExpressionStmt() { }
+
+
+    /*
+	 * <DeclStmt> ::= VAR <Identifier> = <Expression> ;
+     * every local variable must be initialized
+     */
+	private Stmt parseDeclStmt() { }
+
+
+    /*
+	 * <ForStmt> ::= FOR ( <Start> ; <Terminate> ; <Increment> ) <STMT>
+     * <Start>     ::= EMPTY | <Expression>
+     * <Terminate> ::= EMPTY | <Expression>
+     * <Increment> ::= EMPTY | <Expression>
+     */
+	private Stmt parseFor() { }
+
+
+    /*
+	 * <BlockStmt> ::= { <Body> }
+     * <Body> ::= EMPTY | <Stmt> <Body>
+     */
+	private Stmt parseBlock() { }
+
+
+    /*
+	 * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
+     */
+	private Stmt parseIf() { }
+
+
+    //-----------------------------------------
+    // Expressions
+    //Here we introduce the precedence to operations
+
+    /*
+	 * <Expression> ::= <LogicalOrExpr> <OptionalAssignment>
+     * <OptionalAssignment> ::= EMPTY | = <Expression>
+     */
+	private Expr parseExpression() { }
 
 
     /*
@@ -380,131 +409,131 @@ public class Parser
 	}
 
 
-//    /*
-//	 * <LogicalAND> ::= <ComparisonExpr> <LogicalANDRest>
-//     * <LogicalANDRest> ::= EMPTY |  && <ComparisonExpr> <LogicalANDRest>
-//     */
-//	private Expr parseAndExpr() {
-//	}
-//
-//
-//    /*
-//	 * <ComparisonExpr> ::= <RelationalExpr> <equalOrNotEqual> <RelationalExpr> |
-//     *                     <RelationalExpr>
-//     * <equalOrNotEqual> ::=  == | !=
-//     */
-//	private Expr parseEqualityExpr() { }
-//
-//
-//    /*
-//	 * <RelationalExpr> ::=<AddExpr> | <AddExpr> <ComparisonOp> <AddExpr>
-//     * <ComparisonOp> ::=  < | > | <= | >= | INSTANCEOF
-//     */
-//	private Expr parseRelationalExpr() { }
-//
-//
-//    /*
-//	 * <AddExpr>::＝ <MultExpr> <MoreMultExpr>
-//     * <MoreMultExpr> ::= EMPTY | + <MultExpr> <MoreMultExpr> | - <MultExpr> <MoreMultExpr>
-//     */
-//	private Expr parseAddExpr() { }
-//
-//
-//    /*
-//	 * <MultiExpr> ::= <NewCastOrUnary> <MoreNCU>
-//     * <MoreNCU> ::= * <NewCastOrUnary> <MoreNCU> |
-//     *               / <NewCastOrUnary> <MoreNCU> |
-//     *               % <NewCastOrUnary> <MoreNCU> |
-//     *               EMPTY
-//     */
-//	private Expr parseMultExpr() { }
-//
-//    /*
-//	 * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
-//     */
-//	private Expr parseNewCastOrUnary() { }
-//
-//
-//    /*
-//	 * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
-//     */
-//	private Expr parseNew() { }
-//
-//
-//    /*
-//	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
-//     */
-//	private Expr parseCast() { }
-//
-//
-//    /*
-//	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
-//     * <PrefixOp> ::= - | ! | ++ | --
-//     */
-//	private Expr parseUnaryPrefix() { }
-//
-//
-//    /*
-//	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
-//     * <PostfixOp> ::= ++ | -- | EMPTY
-//     */
-//	private Expr parseUnaryPostfix() { }
-//
-//
-//    /*
-//	 * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
-//     *                               <StringConst> | <VarExpr> | <DispatchExpr>
-//     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
-//     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
-//     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
-//     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
-//     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
-//     */
-//	private Expr parsePrimary() { }
-//
-//
-//    /*
-//	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
-//     * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
-//     */
-//	private ExprList parseArguments() { }
-//
-//
-//    /*
-//	 * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
-//     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
-//     */
-//	private FormalList parseParameters() { }
-//
-//
-//    /*
-//	 * <Formal> ::= <Type> <Identifier>
-//     */
-//	private Formal parseFormal() { }
-//
-//
-//    /*
-//	 * <Type> ::= <Identifier> <Brackets>
-//     * <Brackets> ::= EMPTY | [ ]
-//     */
-//	private String parseType() { }
-//
-//
-//    //----------------------------------------
-//    //Terminals
-//
-//	private String parseOperator() { }
-//
-//
-//    private String parseIdentifier() { }
-//
-//
-//    private ConstStringExpr parseStringConst() { }
-//
-//
-//    private ConstIntExpr parseIntConst() { }
-//
-//
-//    private ConstBooleanExpr parseBoolean() { }
+    /*
+	 * <LogicalAND> ::= <ComparisonExpr> <LogicalANDRest>
+     * <LogicalANDRest> ::= EMPTY |  && <ComparisonExpr> <LogicalANDRest>
+     */
+	private Expr parseAndExpr() {
+	}
+
+
+    /*
+	 * <ComparisonExpr> ::= <RelationalExpr> <equalOrNotEqual> <RelationalExpr> |
+     *                     <RelationalExpr>
+     * <equalOrNotEqual> ::=  == | !=
+     */
+	private Expr parseEqualityExpr() { }
+
+
+    /*
+	 * <RelationalExpr> ::=<AddExpr> | <AddExpr> <ComparisonOp> <AddExpr>
+     * <ComparisonOp> ::=  < | > | <= | >= | INSTANCEOF
+     */
+	private Expr parseRelationalExpr() { }
+
+
+    /*
+	 * <AddExpr>::＝ <MultExpr> <MoreMultExpr>
+     * <MoreMultExpr> ::= EMPTY | + <MultExpr> <MoreMultExpr> | - <MultExpr> <MoreMultExpr>
+     */
+	private Expr parseAddExpr() { }
+
+
+    /*
+	 * <MultiExpr> ::= <NewCastOrUnary> <MoreNCU>
+     * <MoreNCU> ::= * <NewCastOrUnary> <MoreNCU> |
+     *               / <NewCastOrUnary> <MoreNCU> |
+     *               % <NewCastOrUnary> <MoreNCU> |
+     *               EMPTY
+     */
+	private Expr parseMultExpr() { }
+
+    /*
+	 * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
+     */
+	private Expr parseNewCastOrUnary() { }
+
+
+    /*
+	 * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
+     */
+	private Expr parseNew() { }
+
+
+    /*
+	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
+     */
+	private Expr parseCast() { }
+
+
+    /*
+	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
+     * <PrefixOp> ::= - | ! | ++ | --
+     */
+	private Expr parseUnaryPrefix() { }
+
+
+    /*
+	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
+     * <PostfixOp> ::= ++ | -- | EMPTY
+     */
+	private Expr parseUnaryPostfix() { }
+
+
+    /*
+	 * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
+     *                               <StringConst> | <VarExpr> | <DispatchExpr>
+     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
+     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
+     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
+     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
+     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
+     */
+	private Expr parsePrimary() { }
+
+
+    /*
+	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
+     * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
+     */
+	private ExprList parseArguments() { }
+
+
+    /*
+	 * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
+     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
+     */
+	private FormalList parseParameters() { }
+
+
+    /*
+	 * <Formal> ::= <Type> <Identifier>
+     */
+	private Formal parseFormal() { }
+
+
+    /*
+	 * <Type> ::= <Identifier> <Brackets>
+     * <Brackets> ::= EMPTY | [ ]
+     */
+	private String parseType() { }
+
+
+    //----------------------------------------
+    //Terminals
+
+	private String parseOperator() { }
+
+
+    private String parseIdentifier() { }
+
+
+    private ConstStringExpr parseStringConst() { }
+
+
+    private ConstIntExpr parseIntConst() { }
+
+
+    private ConstBooleanExpr parseBoolean() { }
 }
 
