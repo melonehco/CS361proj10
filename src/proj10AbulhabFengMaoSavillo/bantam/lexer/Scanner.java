@@ -141,12 +141,6 @@ public class Scanner
                              Character.toString(SourceFile.eof),
                              this.sourceFile.getCurrentLineNumber());
 
-        Token.Kind kind = null;
-        StringBuilder spelling = new StringBuilder();
-        int lineNumber;
-
-        boolean isTokenComplete = true; // start as true, and set to false if not a single char token
-
         Character c = ' ';
         if (!this.buffer.isEmpty())
         {
@@ -164,11 +158,55 @@ public class Scanner
             while (Character.isWhitespace(this.currentChar));
         }
 
-        spelling.append(this.currentChar);
-        lineNumber = this.sourceFile.getCurrentLineNumber();
-
         //check for single-char tokens that can be identified at once
-        switch (this.currentChar)
+        Token singleCharToken = this.attemptCompleteSingleCharToken();
+        if (singleCharToken != null) //if was identified as a single-char token
+            return singleCharToken;
+
+        //check for longer tokens that can be identified at once by first char
+        Token attemptedLongerToken = this.attemptCompleteTokenByFirstChar();
+        if (attemptedLongerToken != null) //if was identified by first char
+            return attemptedLongerToken;
+
+        int lineNumber = this.sourceFile.getCurrentLineNumber();
+        //integer constant
+        if (Character.isDigit(this.currentChar))
+        {
+            return this.completeIntconstToken(lineNumber);
+        }
+        //identifier/boolean/keyword
+        else if (Character.isLetter(this.currentChar))
+        {
+            return this.completeIdentifierToken(lineNumber);
+        }
+
+        //attempt to find a match for remaining token types
+        attemptedLongerToken = this.completeLongerToken();
+
+        if (attemptedLongerToken != null)
+            return attemptedLongerToken;
+        //if first char doesn't match any of above cases, is illegal char
+        else
+        {
+            this.errorHandler.register(Error.Kind.LEX_ERROR,
+                                       this.sourceFile.getFilename(),
+                                       lineNumber,
+                                       "Unexpected character: " + this.currentChar);
+            return new Token(Token.Kind.ERROR, Character.toString(this.currentChar), lineNumber);
+        }
+    }
+    
+    /**
+     * checks whether the first char is a single-char token that can be identified at once,
+     * i.e. that could not form the beginning of another token
+     * @return the single-char Token, or null if not a single-char token
+     */
+    private Token attemptCompleteSingleCharToken()
+    {
+    	Token.Kind kind = null;
+    	
+    	boolean isTokenComplete = true; // start as true, and set to false if not a single char token
+    	switch (this.currentChar)
         {
             //punctuation
             case '.':
@@ -221,13 +259,27 @@ public class Scanner
                 isTokenComplete = false;
                 break;
         }
-
-        if (isTokenComplete)
-            return new Token(kind, spelling.toString(), lineNumber);
-
-        isTokenComplete = true; // set to true, and set to false if fails next check
-
-        // complete longer tokens that can be identified at once by first char
+    	
+    	if (isTokenComplete)
+            return new Token(kind, Character.toString(this.currentChar), this.sourceFile.getCurrentLineNumber());
+    	else
+    		return null;
+    }
+    
+    /**
+     * checks whether the current token is a longer token
+     * that can be identified at once by first char
+     * if it is, attempts to complete the token
+     * @return the resulting Token, or null if not a token handled by this method
+     */
+    private Token attemptCompleteTokenByFirstChar()
+    {
+    	Token.Kind kind = null;
+    	StringBuilder spelling = new StringBuilder();
+    	int lineNumber = this.sourceFile.getCurrentLineNumber();
+    	
+    	boolean isTokenComplete = true; // set to true, and set to false if fails next check
+    	spelling.append(this.currentChar);
         switch (this.currentChar)
         {
             case '&':
@@ -275,28 +327,28 @@ public class Scanner
                 this.currentChar = this.sourceFile.getNextChar();
                 return this.completeStringToken();
             default:
-                isTokenComplete = false; // (it has failed next check)
+                isTokenComplete = false; // (it has failed this check)
                 break;
         }
-
+        
         if (isTokenComplete)
-            return new Token(kind, spelling.toString(), lineNumber);
-
-        isTokenComplete = true;  // set to true, and set to false if fails next check
-
-        //integer constant
-        if (Character.isDigit(this.currentChar))
-        {
-            kind = Token.Kind.INTCONST;
-            return this.completeIntconstToken(lineNumber);
-        }
-        //identifier/boolean/keyword
-        else if (Character.isLetter(this.currentChar))
-        {
-            kind = Token.Kind.IDENTIFIER;
-            return this.completeIdentifierToken(lineNumber);
-        }
-
+        	return new Token(kind, spelling.toString(), lineNumber);
+        else
+        	return null;
+    }
+    
+    /**
+     * completes any longer token not handled by another method in this class
+     * @return the resulting Token, or null if not a token handled by this method
+     */
+    private Token completeLongerToken()
+    {
+    	Token.Kind kind = null;
+    	StringBuilder spelling = new StringBuilder();
+    	int lineNumber = this.sourceFile.getCurrentLineNumber();
+    	
+    	boolean isTokenComplete = true; // set to true, and set to false if fails next check
+    	spelling.append(this.currentChar);
         switch (this.currentChar)
         {
             case '+': //token can be + or ++
@@ -398,17 +450,11 @@ public class Scanner
                 isTokenComplete = false;
                 break;
         }
-
+        
         if (isTokenComplete)
-            return new Token(kind, spelling.toString(), lineNumber);
-        else //if first char doesn't match any of above cases, is illegal char
-        {
-            this.errorHandler.register(Error.Kind.LEX_ERROR,
-                                       this.sourceFile.getFilename(),
-                                       lineNumber,
-                                       "Unexpected character: " + this.currentChar);
-            return new Token(Token.Kind.ERROR, spelling.toString(), lineNumber);
-        }
+        	return new Token(kind, spelling.toString(), lineNumber);
+        else
+        	return null;
     }
 
     /**
@@ -425,11 +471,18 @@ public class Scanner
         //collect chars until closing double quote
         while (this.currentChar != '\"')
         {
-            spellingBuilder.append(Character.toString(this.currentChar));
-            this.currentChar = this.sourceFile.getNextChar();
-
+            //check if too long
+            if (spellingBuilder.length() > 5000)
+            {
+                this.errorHandler.register(Error.Kind.LEX_ERROR,
+                                           this.sourceFile.getFilename(),
+                                           this.sourceFile.getCurrentLineNumber(),
+                                           "String exceeds maximum length");
+                kind = Token.Kind.ERROR;
+                break;
+            }
             //check for escaped chars
-            if (this.currentChar == '\\')
+            else if (this.currentChar == '\\')
             {
                 spellingBuilder.append(Character.toString(this.currentChar));
                 this.currentChar = this.sourceFile.getNextChar();
@@ -454,9 +507,8 @@ public class Scanner
                     break;
                 }
             }
-
             //check if not terminated correctly
-            if (this.currentChar == SourceFile.eof || this.currentChar == SourceFile.eol)
+            else if (this.currentChar == SourceFile.eof || this.currentChar == SourceFile.eol)
             {
                 this.errorHandler.register(Error.Kind.LEX_ERROR,
                                            this.sourceFile.getFilename(),
@@ -465,19 +517,12 @@ public class Scanner
                 kind = Token.Kind.ERROR;
                 break;
             }
-
-            //check if too long
-            if (spellingBuilder.length() > 5000)
+            else
             {
-                this.errorHandler.register(Error.Kind.LEX_ERROR,
-                                           this.sourceFile.getFilename(),
-                                           this.sourceFile.getCurrentLineNumber(),
-                                           "String exceeds maximum length");
-                kind = Token.Kind.ERROR;
-                break;
+                spellingBuilder.append(Character.toString(this.currentChar));
+                this.currentChar = this.sourceFile.getNextChar();
             }
         }
-
         //append closing quote
         spellingBuilder.append(Character.toString(this.currentChar));
 
@@ -582,23 +627,14 @@ public class Scanner
         //check whether int is too long
         try
         {
-            int value = Integer.parseInt(spellingBuilder.toString());
-            if (value < 0)
-            {
-                this.errorHandler.register(Error.Kind.LEX_ERROR,
-                                           this.sourceFile.getFilename(),
-                                           this.sourceFile.getCurrentLineNumber(),
-                                           "Integer exceeds maximum value");
-                kind = Token.Kind.ERROR;
-
-            }
+            Integer.parseInt(spellingBuilder.toString());
         }
         catch (NumberFormatException e)
         {
             this.errorHandler.register(Error.Kind.LEX_ERROR,
                                        this.sourceFile.getFilename(),
                                        this.sourceFile.getCurrentLineNumber(),
-                                       "Integer constant cannot be parsed");
+                                       "Invalid integer constant");
             kind = Token.Kind.ERROR;
         }
 
@@ -629,22 +665,5 @@ public class Scanner
         this.buffer.add(this.currentChar);
 
         return new Token(Token.Kind.IDENTIFIER, spellingBuilder.toString(), lineNumber);
-    }
-
-    /**
-     * Returns the errors registered by the associated ErrorHandler
-     * @return the error list
-     */
-    public List<Error> getErrorList()
-    {
-        return this.errorHandler.getErrorList();
-    }
-
-    /**
-     * setter of source file from filename
-     * @param filename
-     */
-    public void setSourceFile(String filename){
-        this.sourceFile = new SourceFile(filename);
     }
 }

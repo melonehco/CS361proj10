@@ -124,6 +124,8 @@ public class Controller
     private SplitPane horizontalSplitPane;
     @FXML
     private Button scanButton;
+    @FXML
+    private Button scanAndParseButton;
 
     /**
      * This function is called after the FXML fields are populated.
@@ -275,6 +277,7 @@ public class Controller
         this.saveAsMenuItem.disableProperty().bind(this.fileMenuController.tablessProperty());
         this.editMenu.disableProperty().bind(this.fileMenuController.tablessProperty());
         this.scanButton.disableProperty().bind(this.fileMenuController.tablessProperty());
+        this.scanAndParseButton.disableProperty().bind(this.fileMenuController.tablessProperty());
     }
 
     /**
@@ -337,12 +340,20 @@ public class Controller
 
     /**
      * Calls the method that handles the Scan button action from the toolbarController.
-     *
      */
     @FXML
     private void handleScanButtonAction(Event event)
     {
         this.toolbarController.handleScanButtonAction(event, this.javaTabPane.getCurrentFile());
+    }
+
+    /**
+     * Calls the method that handles the Scan and Parse button action from the toolbarController.
+     */
+    @FXML
+    private void handleScanAndParseButtonAction(Event event)
+    {
+        this.toolbarController.handleScanAndParseButtonAction(event, this.javaTabPane.getCurrentFile());
     }
 
     /**
