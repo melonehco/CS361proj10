@@ -280,7 +280,7 @@ public abstract class ASTNode {
      *
      * @param v bantam.visitor object
      * @return result of visiting this node
-     * @see bantam.visitor.Visitor
+     * @see proj10AbulhabFengMaoSavillo.bantam.visitor.Visitor
      */
     abstract public Object accept(Visitor v);
 }

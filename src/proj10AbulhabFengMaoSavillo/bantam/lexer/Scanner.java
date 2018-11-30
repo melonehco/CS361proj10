@@ -639,4 +639,12 @@ public class Scanner
     {
         return this.errorHandler.getErrorList();
     }
+
+    /**
+     * setter of source file from filename
+     * @param filename
+     */
+    public void setSourceFile(String filename){
+        this.sourceFile = new SourceFile(filename);
+    }
 }
