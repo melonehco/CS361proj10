@@ -71,3 +71,4 @@ and parsing were successful for that file.
 
 -_INTERNAL_-
 •  Possibility of using visitors to handle errors?
+    - don't like this idea anymore.
