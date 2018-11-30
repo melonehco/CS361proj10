@@ -1,4 +1,4 @@
-_DALE'S COMMENTS_
+-_DALE'S COMMENTS_-
 [COMPLETED]•  Minor problems (no points taken off this time):
     [COMPLETED]◦     Your completeIntConstToken method, near the end, parses the string and tests whether the resulting
         value is negative. How can the value be negative? Can you give me an example of a string of integers
@@ -19,7 +19,7 @@ this.currentChar at the end of the scan() method is always the first character o
 (that is, that part of the source file after the previous Token was returned). So make sure that, before
 scan() returns a Token, it has advanced currentChar to the first char after the Token being returned.
 
-_PROJECT 10_
+-_PROJECT 10_-
 •  Make sure your scanner is working perfectly.
 
 •  In the Bantam Java Manual, read Section 4.1 and the parts of Section 4.2 concerning the ErrorHandler,
@@ -69,4 +69,4 @@ loop through the files, parsing each one, and printing to System.out the result,
 the file and either the error messages when the file was scanned and parsed or a message that scanning
 and parsing were successful for that file.
 
-_INTERNAL_
+-_INTERNAL_-
