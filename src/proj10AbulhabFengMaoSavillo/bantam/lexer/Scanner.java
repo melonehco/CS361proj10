@@ -666,4 +666,12 @@ public class Scanner
 
         return new Token(Token.Kind.IDENTIFIER, spellingBuilder.toString(), lineNumber);
     }
+
+    /**
+     * set source file from file name
+     * @param filename
+     */
+    public void setSourceFile(String filename) {
+        this.sourceFile = new SourceFile(filename);
+    }
 }
