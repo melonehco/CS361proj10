@@ -471,11 +471,18 @@ public class Scanner
         //collect chars until closing double quote
         while (this.currentChar != '\"')
         {
-            spellingBuilder.append(Character.toString(this.currentChar));
-            this.currentChar = this.sourceFile.getNextChar();
-
+            //check if too long
+            if (spellingBuilder.length() > 5000)
+            {
+                this.errorHandler.register(Error.Kind.LEX_ERROR,
+                                           this.sourceFile.getFilename(),
+                                           this.sourceFile.getCurrentLineNumber(),
+                                           "String exceeds maximum length");
+                kind = Token.Kind.ERROR;
+                break;
+            }
             //check for escaped chars
-            if (this.currentChar == '\\')
+            else if (this.currentChar == '\\')
             {
                 spellingBuilder.append(Character.toString(this.currentChar));
                 this.currentChar = this.sourceFile.getNextChar();
@@ -500,9 +507,8 @@ public class Scanner
                     break;
                 }
             }
-
             //check if not terminated correctly
-            if (this.currentChar == SourceFile.eof || this.currentChar == SourceFile.eol)
+            else if (this.currentChar == SourceFile.eof || this.currentChar == SourceFile.eol)
             {
                 this.errorHandler.register(Error.Kind.LEX_ERROR,
                                            this.sourceFile.getFilename(),
@@ -511,19 +517,12 @@ public class Scanner
                 kind = Token.Kind.ERROR;
                 break;
             }
-
-            //check if too long
-            if (spellingBuilder.length() > 5000)
+            else
             {
-                this.errorHandler.register(Error.Kind.LEX_ERROR,
-                                           this.sourceFile.getFilename(),
-                                           this.sourceFile.getCurrentLineNumber(),
-                                           "String exceeds maximum length");
-                kind = Token.Kind.ERROR;
-                break;
+                spellingBuilder.append(Character.toString(this.currentChar));
+                this.currentChar = this.sourceFile.getNextChar();
             }
         }
-
         //append closing quote
         spellingBuilder.append(Character.toString(this.currentChar));
 

@@ -1,0 +1,20 @@
+[COMPLETED]•  Minor problems (no points taken off this time):
+    [COMPLETED]◦     Your completeIntConstToken method, near the end, parses the string and tests whether the resulting
+        value is negative. How can the value be negative? Can you give me an example of a string of integers
+        where parsing it gives a negative value? If not, you should remove that case and change the error
+        message for the NumberFormatException case to be more descriptive of the actual problem.
+    [COMPLETED]◦     In ToolbarController, on line 109 you should save the ErrorHandler in a local variable and then on line
+        127, ask the ErrorHandler for the list of errors, rather than asking the scanner.
+
+•  Your scan() method is about 180 lines long. That is too long for an elegant method. It needs to be broken
+into smaller methods. For example, just as you have a method for handling string tokens, add a method
+for handling operators.
+
+[COMPLETED]•  Your scanner doesn’t accept “\”” as a legal string token.
+
+•  Your use of a buffer in the scan() method is not the most elegant way to implement the method. You can
+get rid of the buffer if you just fix the scan method so that it has the following invariant: The value of
+this.currentChar at the end of the scan() method is always the first character of the rest of the source file
+(that is, that part of the source file after the previous Token was returned). So make sure that, before
+scan() returns a Token, it has advanced currentChar to the first char after the Token being returned.
+
