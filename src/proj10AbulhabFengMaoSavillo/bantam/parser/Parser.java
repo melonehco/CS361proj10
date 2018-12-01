@@ -565,7 +565,7 @@ public class Parser
                 }
                 else this.currentToken=this.scanner.scan();
                 Stmt bodyStmt = parseStatement();
-                return new ForStmt(position, start,terminate,increment,bodyStmt)
+                return new ForStmt(position, start,terminate,increment,bodyStmt);
             }
         }
         return null;
