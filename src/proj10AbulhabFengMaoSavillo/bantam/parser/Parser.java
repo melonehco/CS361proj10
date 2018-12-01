@@ -41,17 +41,6 @@ public class Parser
     }
 
     /**
-     * Eats comments
-     */
-    private void advancePastCommentary()
-    {
-        while (this.currentToken.kind == COMMENT)
-        {
-            this.currentToken = this.scanner.scan();
-        }
-    }
-
-    /**
      * Test code for Parser
      */
     public static void main(String[] args)
@@ -105,22 +94,6 @@ public class Parser
     }
 
     /**
-     * Parsing Error occurred!
-     *
-     * @param errorMessage
-     * @throws CompilationException
-     */
-    private void whinge(String errorMessage)
-            throws CompilationException
-    {
-        this.errorHandler.register(Error.Kind.PARSE_ERROR,
-                                   this.filename,
-                                   this.currentToken.position,
-                                   errorMessage);
-        throw new CompilationException(String.format("Compilation Exception: %s", errorMessage));
-    }
-
-    /**
      * parse the given file and return the root node of the AST
      *
      * @param filename The name of the Bantam Java file to be parsed
@@ -133,7 +106,6 @@ public class Parser
         this.filename = filename;
         return (parseProgram());
     }
-
 
     /*
      * <Program> ::= <Class> | <Class> <Program>
@@ -153,6 +125,16 @@ public class Parser
         return new Program(position, classList);
     }
 
+    /**
+     * Eats comments
+     */
+    private void advancePastCommentary()
+    {
+        while (this.currentToken.kind == COMMENT)
+        {
+            this.currentToken = this.scanner.scan();
+        }
+    }
 
     /*
      * <Class> ::= CLASS <Identifier> <ExtendsClause> { <MemberList> }
@@ -196,7 +178,7 @@ public class Parser
 
             if (this.currentToken.kind != LCURLY)
             {
-                this.whinge("Expecting left brace.");
+                this.whinge("Expected left brace.");
             }
 
             while (this.currentToken.kind != RCURLY)
@@ -218,243 +200,437 @@ public class Parser
         return new Class_(initialPosition, className, className, parent, memberList);
     }
 
+    /**
+     * Parsing Error occurred!
+     *
+     * @param errorMessage
+     * @throws CompilationException
+     */
+    private void whinge(String errorMessage)
+            throws CompilationException
+    {
+        this.errorHandler.register(Error.Kind.PARSE_ERROR,
+                                   this.filename,
+                                   this.currentToken.position,
+                                   errorMessage);
+        throw new CompilationException(String.format("Compilation Exception: %s", errorMessage));
+    }
+
     /* Fields and Methods
      * <Member> ::= <Field> | <Method>
      * <Method> ::= <Type> <Identifier> ( <Parameters> ) <Block>
      * <Field> ::= <Type> <Identifier> <InitialValue> ;
      * <InitialValue> ::= EMPTY | = <Expression>
      */
-     private Member parseMember()
-     {
-    	 int position = currentToken.position;
-    	 String type = this.parseType();
-    	 String nameIdentifier = this.parseIdentifier();
-    	 Member member = null;
+    private Member parseMember()
+    {
+        int position = currentToken.position;
+        String type = this.parseType();
+        String nameIdentifier = this.parseIdentifier();
+        Member member = null;
 
-    	 //if member matches form for a method
-    	 if (this.currentToken.kind == LPAREN)
-    	 {
-    		 scanner.scan();
-    		 FormalList params = this.parseParameters();
+        //if member matches form for a method
+        if (this.currentToken.kind == LPAREN)
+        {
+            scanner.scan();
+            FormalList params = this.parseParameters();
 
-    		 //check for closing parenthesis
-    		 if (this.currentToken.kind != RPAREN)
-    		 {
-    			 //TODO: error: Missing closing parenthesis.
-    		 }
-    		 else //if present, move on to next token
-    		 {
-    			 this.currentToken = scanner.scan();
-    		 }
+            //check for closing parenthesis
+            if (this.currentToken.kind != RPAREN)
+            {
+                //TODO: error: Missing closing parenthesis.
+            }
+            else //if present, move on to next token
+            {
+                this.currentToken = scanner.scan();
+            }
 
-    		 BlockStmt block = (BlockStmt) this.parseBlock();
-    		 StmtList blockStmts = block.getStmtList();
+            BlockStmt block = (BlockStmt) this.parseBlock();
+            StmtList blockStmts = block.getStmtList();
 
-    		 member = new Method(position, type, nameIdentifier,
-                     				params, blockStmts);
-    	 }
-    	 else //otherwise parse member as field
-    	 {
-    		 if (this.currentToken.kind == SEMICOLON)
-    		 {
-    			 //TODO: is it okay to have null for an empty init value?
-    			 //empty initial value
-    			 member = new Field(position, type, nameIdentifier, null);
-    		 }
-    		 else if (this.currentToken.kind == ASSIGN)
-    		 {
-    			 //non-empty initial value
-    			 scanner.scan(); //read past =
-    			 Expr initValueExpr = this.parseExpression();
+            member = new Method(position, type, nameIdentifier,
+                                params, blockStmts);
+        }
+        else //otherwise parse member as field
+        {
+            if (this.currentToken.kind == SEMICOLON)
+            {
+                //TODO: is it okay to have null for an empty init value?
+                //empty initial value
+                member = new Field(position, type, nameIdentifier, null);
+            }
+            else if (this.currentToken.kind == ASSIGN)
+            {
+                //non-empty initial value
+                scanner.scan(); //read past =
+                Expr initValueExpr = this.parseExpression();
 
-    			 //check for semicolon
-    			 if (this.currentToken.kind != SEMICOLON)
-    			 {
-    				 //TODO: error: Missing ending semicolon.
-    			 }
-    			 else
-    			 {
-    				 member = new Field(position, type, nameIdentifier, initValueExpr);
-    			 }
-    		 }
-    		 else
-    		 {
-    			 //invalid syntax
-    			 //TODO: error: Invalid field initialization.
-    		 }
-    	 }
+                //check for semicolon
+                if (this.currentToken.kind != SEMICOLON)
+                {
+                    //TODO: error: Missing ending semicolon.
+                }
+                else
+                {
+                    member = new Field(position, type, nameIdentifier, initValueExpr);
+                }
+            }
+            else
+            {
+                //invalid syntax
+                //TODO: error: Invalid field initialization.
+            }
+        }
 
-    	 return member;
-     }
-
+        return member;
+    }
 
     //-----------------------------------
+
+    /*
+     * <BlockStmt> ::= { <Body> }
+     * <Body> ::= EMPTY | <Stmt> <Body>
+     */
+    private Stmt parseBlock()
+	{
+		int initialPosition = currentToken.position;
+		String type = this.parseType();
+		String nameIdentifier = this.parseIdentifier();
+		BlockStmt blockStmt = null;
+
+		scanner.scan();
+		if (this.currentToken.kind == LCURLY)
+		{
+			StmtList stmtList = new StmtList(initialPosition);
+			blockStmt = new BlockStmt(initialPosition, stmtList);
+			while (this.currentToken.kind != RCURLY)
+			{
+				advancePastCommentary();
+				parseStatement();
+				// TODO: How can I add the statements to the stmList??
+			}
+		}
+		else
+		{
+			// TODO: error
+			// Does this have to account for blocks with only one line that use no curly braces?
+		}
+
+		return blockStmt;
+	}
+
+    /*
+     * <Expression> ::= <LogicalOrExpr> <OptionalAssignment> TODO: "LogicalOrExpr"??
+     * <OptionalAssignment> ::= EMPTY | = <Expression>
+     */
+    private Expr parseExpression()
+	{
+		Expr expr;
+
+//		switch (currentToken.kind)
+//		{
+//			case RCURLY:
+//				expr = parseOrExpr();
+//				break;
+//			case LCURLY:
+//				expr = parseAndExpr();
+//				break;
+//			case VAR:
+//				expr = parseEqualityExpr();
+//				break;
+//			case RETURN:
+//				expr = parseEqualityExpr();
+//				break;
+//			case FOR:
+//				expr = parseRelationalExpr();
+//				break;
+//			case WHILE:
+//				expr = parseAddExpr();
+//				break;
+//			case BREAK:
+//				expr = parseMultExpr();
+//				break;
+//			case BREAK:
+//				expr = parseNewCastOrUnary();
+//				break;
+//			case NEW:
+//				expr = parseNew();
+//				break;
+//			case BREAK:
+//				expr = parseCast();
+//				break;
+//			case BREAK:
+//				expr = parseUnaryPrefix();
+//				break;
+//			case BREAK:
+//				expr = parseUnaryPostfix();
+//				break;
+//			case BREAK:
+//				expr = parsePrimary();
+//				break;
+//			case BREAK:
+//				expr = parseExpressionStmt();
+//		}
+
+		expr = null;
+		return expr;
+	}
+
+    /*
+     * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
+     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
+     */
+    private FormalList parseParameters() { }
+
+    /*
+     * <Type> ::= <Identifier> <Brackets>
+     * <Brackets> ::= EMPTY | [ ]
+     */
+    private String parseType() { }
+
+    private String parseIdentifier() { }
 
     /* Statements
      *  <Stmt> ::= <WhileStmt> | <ReturnStmt> | <BreakStmt> | <DeclStmt>
      *              | <ExpressionStmt> | <ForStmt> | <BlockStmt> | <IfStmt>
      */
-     private Stmt parseStatement() {
-            Stmt stmt;
+    private Stmt parseStatement()
+    {
+        Stmt stmt;
 
-            switch (currentToken.kind) {
-                case IF:
-                    stmt = parseIf();
-                    break;
-                case LCURLY:
-                    stmt = parseBlock();
-                    break;
-                case VAR:
-                    stmt = parseDeclStmt();
-                    break;
-                case RETURN:
-                    stmt = parseReturn();
-                    break;
-                case FOR:
-                    stmt = parseFor();
-                    break;
-                case WHILE:
-                    stmt = parseWhile();
-                    break;
-                case BREAK:
-                    stmt = parseBreak();
-                    break;
-                default:
-                    stmt = parseExpressionStmt();
-            }
+        switch (currentToken.kind)
+        {
+            case IF:
+                stmt = parseIf();
+                break;
+            case LCURLY:
+                stmt = parseBlock();
+                break;
+            case VAR:
+                stmt = parseDeclStmt();
+                break;
+            case RETURN:
+                stmt = parseReturn();
+                break;
+            case FOR:
+                stmt = parseFor();
+                break;
+            case WHILE:
+                stmt = parseWhile();
+                break;
+            case BREAK:
+                stmt = parseBreak();
+                break;
+            default:
+                stmt = parseExpressionStmt();
+        }
 
-            return stmt;
+        return stmt;
     }
-
 
     /*
      * <WhileStmt> ::= WHILE ( <Expression> ) <Stmt>
      */
     private Stmt parseWhile() { }
 
-
     /*
      * <ReturnStmt> ::= RETURN <Expression> ; | RETURN ;
      */
-	private Stmt parseReturn() { }
-
-
-    /*
-	 * BreakStmt> ::= BREAK ;
-     */
-	private Stmt parseBreak() { }
-
+    private Stmt parseReturn() { }
 
     /*
-	 * <ExpressionStmt> ::= <Expression> ;
+     * BreakStmt> ::= BREAK ;
      */
-	private ExprStmt parseExpressionStmt() { }
-
-
-    /*
-	 * <DeclStmt> ::= VAR <Identifier> = <Expression> ;
-     * every local variable must be initialized
-     */
-	private Stmt parseDeclStmt() { }
-
-
-    /*
-	 * <ForStmt> ::= FOR ( <Start> ; <Terminate> ; <Increment> ) <STMT>
-     * <Start>     ::= EMPTY | <Expression>
-     * <Terminate> ::= EMPTY | <Expression>
-     * <Increment> ::= EMPTY | <Expression>
-     */
-	private Stmt parseFor() { }
-
-
-    /*
-	 * <BlockStmt> ::= { <Body> }
-     * <Body> ::= EMPTY | <Stmt> <Body>
-     */
-	private Stmt parseBlock() { }
-
-
-    /*
-	 * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
-     */
-	private Stmt parseIf() { }
-
+    private Stmt parseBreak() { }
 
     //-----------------------------------------
     // Expressions
     //Here we introduce the precedence to operations
 
     /*
-	 * <Expression> ::= <LogicalOrExpr> <OptionalAssignment>
-     * <OptionalAssignment> ::= EMPTY | = <Expression>
+     * <ExpressionStmt> ::= <Expression> ;
      */
-	private Expr parseExpression() { }
-
+    private ExprStmt parseExpressionStmt() { }
 
     /*
-	 * <LogicalOR> ::= <logicalAND> <LogicalORRest>
+     * <DeclStmt> ::= VAR <Identifier> = <Expression> ;
+     * every local variable must be initialized
+     */
+    private Stmt parseDeclStmt() { }
+
+    /*
+     * <ForStmt> ::= FOR ( <Start> ; <Terminate> ; <Increment> ) <STMT>
+     * <Start>     ::= EMPTY | <Expression>
+     * <Terminate> ::= EMPTY | <Expression>
+     * <Increment> ::= EMPTY | <Expression>
+     */
+    private Stmt parseFor() { }
+
+    /*
+     * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
+     */
+    private Stmt parseIf()
+    {
+        int position = 0;
+        Expr expr = null;
+        Stmt thenStmt = null;
+        Stmt elseStmt = null;
+
+        if(this.currentToken.kind==IF){
+            position = currentToken.position;
+            this.currentToken = this.scanner.scan();
+            if(this.currentToken.kind==LPAREN){
+                expr = parseExpression();
+                this.currentToken = this.scanner.scan();
+                if(this.currentToken.kind==RPAREN){
+                    thenStmt = parseStatement();
+                    this.currentToken = this.scanner.scan();
+                    if(this.currentToken.kind==ELSE){
+                        elseStmt = parseStatement();
+                        this.currentToken = this.scanner.scan();
+                    }
+                }
+            }
+        }
+        return new IfStmt(position,expr,thenStmt,elseStmt);
+    }
+
+    /*
+     * <LogicalOR> ::= <logicalAND> <LogicalORRest>
      * <LogicalORRest> ::= EMPTY |  || <LogicalAND> <LogicalORRest>
      */
-	private Expr parseOrExpr() {
+    private Expr parseOrExpr()
+    {
         int position = currentToken.position;
 
         Expr left = parseAndExpr();
-        while (this.currentToken.spelling.equals("||")) {
+        while (this.currentToken.spelling.equals("||"))
+        {
             this.currentToken = scanner.scan();
             Expr right = parseAndExpr();
             left = new BinaryLogicOrExpr(position, left, right);
         }
 
         return left;
-	}
-	
+    }
+
     /*
-	 * <LogicalAND> ::= <ComparisonExpr> <LogicalANDRest>
+     * <LogicalAND> ::= <ComparisonExpr> <LogicalANDRest>
      * <LogicalANDRest> ::= EMPTY |  && <ComparisonExpr> <LogicalANDRest>
      */
-	private Expr parseAndExpr() {
-	}
+    private Expr parseAndExpr()
+    {
+        int position = currentToken.position;
+        Expr left = parseEqualityExpr();
+        while(this.currentToken.spelling.equals("&&")){
+            this.currentToken=this.scanner.scan();
+            Expr right = parseEqualityExpr();
+            left = new BinaryLogicAndExpr(position,left,right);
+        }
+        return left;
 
+
+    }
 
     /*
-	 * <ComparisonExpr> ::= <RelationalExpr> <equalOrNotEqual> <RelationalExpr> |
+     * <ComparisonExpr> ::= <RelationalExpr> <equalOrNotEqual> <RelationalExpr> |
      *                     <RelationalExpr>
      * <equalOrNotEqual> ::=  == | !=
      */
-	private Expr parseEqualityExpr() { }
+    private Expr parseEqualityExpr()
+    {
+        int position = currentToken.position;
+        Expr left = parseRelationalExpr();
+        Expr right = null;
+        this.currentToken=scanner.scan();
+        if (this.currentToken.spelling=="=="){
+            this.currentToken=this.scanner.scan();
+            right = parseRelationalExpr();
+            return new BinaryCompEqExpr(position,left,right);
+        }
+        else if (this.currentToken.spelling=="!="){
+            this.currentToken=this.scanner.scan();
+            right = parseRelationalExpr();
+            return new BinaryCompNeExpr(position,left,right);
+        }
+        else {
+            return null;
+            //TODO:ERROR
+        }
 
+    }
 
     /*
-	 * <RelationalExpr> ::=<AddExpr> | <AddExpr> <ComparisonOp> <AddExpr>
+     * <RelationalExpr> ::=<AddExpr> | <AddExpr> <ComparisonOp> <AddExpr>
      * <ComparisonOp> ::=  < | > | <= | >= | INSTANCEOF
      */
-	private Expr parseRelationalExpr() { }
+    private Expr parseRelationalExpr()
+    {
+        int position = currentToken.position;
+        Expr left = parseRelationalExpr();
+        Expr right = null;
+        this.currentToken=scanner.scan();
+        switch(this.currentToken.spelling)
+        {
+            case "<":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompLtExpr(position,left,right);
+            case ">":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompGtExpr(position,left,right);
+            case "<=":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompLeqExpr(position,left,right);
+            case ">=":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompGeqExpr(position,left,right);
+        }
 
+        return null;
+        //TODO:ERROR
+
+    }
 
     /*
-	 * <AddExpr>::＝ <MultExpr> <MoreMultExpr>
+     * <AddExpr>::＝ <MultExpr> <MoreMultExpr>
      * <MoreMultExpr> ::= EMPTY | + <MultExpr> <MoreMultExpr> | - <MultExpr> <MoreMultExpr>
      */
-	private Expr parseAddExpr() { }
-
+    private Expr parseAddExpr()
+    {
+        //TODO
+        int position = currentToken.position;
+        Expr left = parseMultExpr();
+        while(this.currentToken.spelling.equals("+")||this.currentToken.spelling.equals("-")){
+            this.currentToken=this.scanner.scan();
+            Expr right = parseMultExpr();
+            if(this.currentToken.spelling=="+")
+                left = new BinaryArithPlusExpr(position,left,right);
+            else if(this.currentToken.spelling=="-")
+                left = new BinaryArithMinusExpr(position,left,right);
+        }
+        return left;
+    }
 
     /*
-	 * <MultiExpr> ::= <NewCastOrUnary> <MoreNCU>
+     * <MultiExpr> ::= <NewCastOrUnary> <MoreNCU>
      * <MoreNCU> ::= * <NewCastOrUnary> <MoreNCU> |
      *               / <NewCastOrUnary> <MoreNCU> |
      *               % <NewCastOrUnary> <MoreNCU> |
      *               EMPTY
      */
-	private Expr parseMultExpr() { }
+    private Expr parseMultExpr() { }
 
     /*
-	 * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
+     * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
      */
-	private Expr parseNewCastOrUnary() { }
-
+    private Expr parseNewCastOrUnary() { }
 
     /*
-	 * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
+     * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
      */
 	private Expr parseNew()
 	{ 
@@ -507,7 +683,7 @@ public class Parser
 	}
 
     /*
-	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
+     * <CastExpression> ::= CAST ( <Type> , <Expression> )
      */
 	private Expr parseCast()
 	{
@@ -545,9 +721,8 @@ public class Parser
 		return result;
 	}
 
-
     /*
-	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
+     * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
      * <PrefixOp> ::= - | ! | ++ | --
      */
 	private Expr parseUnaryPrefix()
@@ -601,9 +776,8 @@ public class Parser
 		return result;
 	}
 
-
     /*
-	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
+     * <UnaryPostfix> ::= <Primary> <PostfixOp>
      * <PostfixOp> ::= ++ | -- | EMPTY
      */
 	private Expr parseUnaryPostfix()
@@ -632,9 +806,8 @@ public class Parser
 		return result;
 	}
 
-
     /*
-	 * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
+     * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
      *                               <StringConst> | <VarExpr> | <DispatchExpr>
      * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
      * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
@@ -642,11 +815,46 @@ public class Parser
      * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
      * <DispatchExprPrefix> ::= <Primary> . | EMPTY
      */
-	private Expr parsePrimary() { }
+    private Expr parsePrimary()
+    {
+        int lineNum = this.currentToken.position;
 
+        if (this.currentToken.kind == LPAREN)
+        {
+            this.currentToken = this.scanner.scan();
+            Expr primary = parseExpression();
+
+            this.currentToken = this.scanner.scan();
+            if (this.currentToken.kind != RPAREN)
+                this.whinge("Expected closing parenthesis");
+
+            return primary;
+            //this.currentToken = this.scanner.scan();
+        }
+        else if(this.currentToken.kind == INTCONST)
+        {
+            return parseIntConst();
+        }
+        else if(this.currentToken.kind == BOOLEAN)
+        {
+            return parseBoolean();
+        }
+        else if(this.currentToken.kind == STRCONST)
+        {
+            return parseStringConst();
+        }
+        else if(this.currentToken.kind ==  IDENTIFIER)
+        {
+
+        }
+        else
+            this.whinge("");
+
+        return null;
+    }
 
     /*
-	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
+     * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
      * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
      */
 	private ExprList parseArguments()
@@ -667,41 +875,86 @@ public class Parser
 		return argList;
 	}
 
-
-    /*
-	 * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
-     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
-     */
-	private FormalList parseParameters() { }
-
-	/*
-	 * <Formal> ::= <Type> <Identifier>
-     */
-	private Formal parseFormal() { }
-
-
-    /*
-	 * <Type> ::= <Identifier> <Brackets>
-     * <Brackets> ::= EMPTY | [ ]
-     */
-	private String parseType() { }
-
-
     //----------------------------------------
     //Terminals
 
-	private String parseOperator() { }
+    /*
+     * <Formal> ::= <Type> <Identifier>
+     */
+    private Formal parseFormal()
+    {
+        int lineNum = this.currentToken.position;
+        String type = "";
+        String name = "";
+
+        if (this.currentToken.kind == IDENTIFIER)
+        {
+            type = parseIdentifier();
+        }
+        else
+            this.whinge("Expected valid type name");
+
+        //this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind == LBRACKET)  // optional brackets
+        {
+            this.currentToken = this.scanner.scan();
+            if (this.currentToken.kind != RBRACKET)
+                this.whinge("Expected closing bracket");
+
+            this.currentToken = this.scanner.scan();
+        }
+
+        if (this.currentToken.kind == IDENTIFIER)
+        {
+            name = parseIdentifier();
+        }
+        else
+            this.whinge("Expected identifier or opening bracket");
+
+        //this.currentToken = this.scanner.scan();
+
+        return new Formal(lineNum, type, name);
+    }
+
+    private String parseOperator()
+    {
+        String operator = this.currentToken.spelling;
+
+        this.currentToken = this.scanner.scan();
+
+        return operator;
+    }
+
+    private ConstStringExpr parseStringConst()
+    {
+        int lineNum = this.currentToken.position;
+        String constant = this.currentToken.getSpelling();
+
+        this.currentToken = this.scanner.scan();
+
+        return new ConstStringExpr(lineNum, constant);
+    }
 
 
-    private String parseIdentifier() { }
+    private ConstIntExpr parseIntConst()
+    {
+        int lineNum = this.currentToken.position;
+        String constant = this.currentToken.getSpelling();
+
+        this.currentToken = this.scanner.scan();
+
+        return new ConstIntExpr(lineNum, constant);
+    }
 
 
-    private ConstStringExpr parseStringConst() { }
+    private ConstBooleanExpr parseBoolean()
+    {
+        int lineNum = this.currentToken.position;
+        String constant = this.currentToken.getSpelling();
 
+        this.currentToken = this.scanner.scan();
 
-    private ConstIntExpr parseIntConst() { }
-
-
-    private ConstBooleanExpr parseBoolean() { }
+        return new ConstBooleanExpr(lineNum, constant);
+    }
 }
 

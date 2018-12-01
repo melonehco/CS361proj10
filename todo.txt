@@ -70,3 +70,7 @@ the file and either the error messages when the file was scanned and parsed or a
 and parsing were successful for that file.
 
 -_INTERNAL_-
+•  Possibility of using visitors to handle errors?
+    - don't like this idea anymore.
+
+•  Which have to worry about advancing the character position?
