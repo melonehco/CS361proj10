@@ -472,17 +472,19 @@ public class Parser
     private Stmt parseReturn()
     {
         Expr expr = null;
-        if (this.currentToken.kind == RETURN)
+        int lineNum = this.currentToken.position;
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind != SEMICOLON)
         {
-            int position = this.currentToken.position;
-            this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind != SEMICOLON)
-            {
-                expr = parseExpression();
-            }
-            return new ReturnStmt(position, expr);
+            expr = parseExpression();
+            checkSemicolon();
+
         }
-        return null;
+        else{
+            this.currentToken = this.scanner.scan();
+        }
+
+        return new ReturnStmt(lineNum, expr);
     }
 
     /*
@@ -490,11 +492,11 @@ public class Parser
      */
     private Stmt parseBreak()
     {
-        if (this.currentToken.kind == BREAK)
-        {
-            return new BreakStmt(this.currentToken.position);
-        }
-        return null;
+        int lineNum = this.currentToken.position;
+        this.currentToken = this.scanner.scan();
+        checkSemicolon();
+        return new BreakStmt(lineNum);
+
     }
 
     //-----------------------------------------
@@ -507,9 +509,10 @@ public class Parser
     private ExprStmt parseExpressionStmt()
     {
         advancePastCommentary();
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr expr = parseExpression();
-        return new ExprStmt(position, expr);
+        checkSemicolon();
+        return new ExprStmt(lineNum, expr);
     }
 
     /*
@@ -518,9 +521,8 @@ public class Parser
      */
     private Stmt parseDeclStmt()
     {
+        //TODO: how to check "every local variable must be initialized"?
         int position = 0;
-        if (this.currentToken.kind == VAR)
-        {
             this.currentToken = this.scanner.scan();
             if (this.currentToken.kind == IDENTIFIER)
             {
@@ -529,10 +531,14 @@ public class Parser
                 if (this.currentToken.kind == ASSIGN)
                 {
                     Expr expr = parseExpression();
+                    if (this.currentToken.kind != SEMICOLON) this.whinge("Expected semicolon");
+                    this.currentToken = this.scanner.scan();
                     return new DeclStmt(position, identifier, expr);
                 }
+                else whinge("Expected assignment sign");
             }
-        }
+            else whinge("Expected identifier");
+
         return null;
     }
 
@@ -544,39 +550,36 @@ public class Parser
      */
     private Stmt parseFor()
     {
-        int position = 0;
         Expr start = null;
         Expr terminate = null;
         Expr increment = null;
 
-        if (this.currentToken.kind == FOR)
+        int lineNum = this.currentToken.position;
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind == LPAREN)
         {
-            position = this.currentToken.position;
             this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind == LPAREN)
+            if (this.currentToken.kind != SEMICOLON)
             {
-                this.currentToken = this.scanner.scan();
-                if (this.currentToken.kind != SEMICOLON)
-                {
-                    start = parseExpression();
-                }
-                else this.currentToken = this.scanner.scan();
+                start = parseExpression();
+\            }
+            else this.currentToken = this.scanner.scan();
 
-                if (this.currentToken.kind != SEMICOLON)
-                {
-                    terminate = parseExpression();
-                }
-                else this.currentToken = this.scanner.scan();
-
-                if (this.currentToken.kind != RPAREN)
-                {
-                    increment = parseExpression();
-                }
-                else this.currentToken = this.scanner.scan();
-                Stmt bodyStmt = parseStatement();
-                return new ForStmt(position, start, terminate, increment, bodyStmt);
+            if (this.currentToken.kind != SEMICOLON)
+            {
+                terminate = parseExpression();
             }
+            else this.currentToken = this.scanner.scan();
+
+            if (this.currentToken.kind != RPAREN)
+            {
+                increment = parseExpression();
+            }
+            else this.currentToken = this.scanner.scan();
+            Stmt bodyStmt = parseStatement();
+            return new ForStmt(lineNum, start, terminate, increment, bodyStmt);
         }
+
         return null;
     }
 
@@ -585,32 +588,31 @@ public class Parser
      */
     private Stmt parseIf()
     {
-        int position = 0;
         Expr expr = null;
         Stmt thenStmt = null;
         Stmt elseStmt = null;
 
-        if (this.currentToken.kind == IF)
+        int lineNum = currentToken.position;
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind == LPAREN)
         {
-            position = currentToken.position;
+            expr = parseExpression();
             this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind == LPAREN)
+            if (this.currentToken.kind == RPAREN)
             {
-                expr = parseExpression();
+                thenStmt = parseStatement(); // TODO: does this account for braces? Cuz I don't think parseStatement does
                 this.currentToken = this.scanner.scan();
-                if (this.currentToken.kind == RPAREN)
+                if (this.currentToken.kind == ELSE)
                 {
-                    thenStmt = parseStatement(); // TODO: does this account for braces? Cuz I don't think parseStatement does
+                    elseStmt = parseStatement();
                     this.currentToken = this.scanner.scan();
-                    if (this.currentToken.kind == ELSE)
-                    {
-                        elseStmt = parseStatement();
-                        this.currentToken = this.scanner.scan();
-                    }
                 }
             }
+            else whinge("Expected closing parenthesis");
         }
-        return new IfStmt(position, expr, thenStmt, elseStmt);
+        else whinge("Expected opening parenthesis");
+
+        return new IfStmt(lineNum, expr, thenStmt, elseStmt);
     }
 
     /*
@@ -675,8 +677,8 @@ public class Parser
         }
         else
         {
+            whinge("Expected == or !=");
             return null;
-            //TODO:ERROR
         }
 
     }
@@ -1139,6 +1141,14 @@ public class Parser
         this.currentToken = this.scanner.scan();
 
         return new ConstBooleanExpr(lineNum, constant);
+    }
+
+    /**
+     * helper method to check semicolon
+     */
+    private void checkSemicolon(){
+        if (this.currentToken.kind != SEMICOLON) this.whinge("Expected semicolon");
+        this.currentToken = this.scanner.scan();
     }
 }
 
