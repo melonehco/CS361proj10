@@ -225,6 +225,8 @@ public class Parser
     private Member parseMember()
     {
         int position = currentToken.position;
+        // TODO: Should we parse right now or in the parseType method?
+        //       Because as of now, we're still on the opening brace of a class
         String type = this.parseType();
         String nameIdentifier = this.parseIdentifier();
         Member member = null;
@@ -262,7 +264,7 @@ public class Parser
             else if (this.currentToken.kind == ASSIGN)
             {
                 //non-empty initial value
-                scanner.scan(); //read past =
+                currentToken = scanner.scan(); //read past =
                 Expr initValueExpr = this.parseExpression();
 
                 //check for semicolon
@@ -294,11 +296,8 @@ public class Parser
     private Stmt parseBlock()
 	{
 		int initialPosition = currentToken.position;
-		String type = this.parseType();
-		String nameIdentifier = this.parseIdentifier();
 		BlockStmt blockStmt = null;
 
-		scanner.scan();
 		if (this.currentToken.kind == LCURLY)
 		{
 			StmtList stmtList = new StmtList(initialPosition);
@@ -306,13 +305,13 @@ public class Parser
 			while (this.currentToken.kind != RCURLY)
 			{
 				advancePastCommentary();
-				parseStatement();
-				// TODO: How can I add the statements to the stmList??
+				Stmt stmt = parseStatement();
+				stmtList.addElement(stmt);
 			}
 		}
 		else
 		{
-			// TODO: error
+			// TODO: error for method not having curly braces?
 			// Does this have to account for blocks with only one line that use no curly braces?
 		}
 
@@ -320,75 +319,90 @@ public class Parser
 	}
 
     /*
-     * <Expression> ::= <LogicalOrExpr> <OptionalAssignment> TODO: "LogicalOrExpr"??
+     * <Expression> ::= <LogicalOrExpr> <OptionalAssignment>
      * <OptionalAssignment> ::= EMPTY | = <Expression>
      */
     private Expr parseExpression()
 	{
 		Expr expr;
 
-//		switch (currentToken.kind)
-//		{
-//			case RCURLY:
-//				expr = parseOrExpr();
-//				break;
-//			case LCURLY:
-//				expr = parseAndExpr();
-//				break;
-//			case VAR:
-//				expr = parseEqualityExpr();
-//				break;
-//			case RETURN:
-//				expr = parseEqualityExpr();
-//				break;
-//			case FOR:
-//				expr = parseRelationalExpr();
-//				break;
-//			case WHILE:
-//				expr = parseAddExpr();
-//				break;
-//			case BREAK:
-//				expr = parseMultExpr();
-//				break;
-//			case BREAK:
-//				expr = parseNewCastOrUnary();
-//				break;
-//			case NEW:
-//				expr = parseNew();
-//				break;
-//			case BREAK:
-//				expr = parseCast();
-//				break;
-//			case BREAK:
-//				expr = parseUnaryPrefix();
-//				break;
-//			case BREAK:
-//				expr = parseUnaryPostfix();
-//				break;
-//			case BREAK:
-//				expr = parsePrimary();
-//				break;
-//			case BREAK:
-//				expr = parseExpressionStmt();
-//		}
+		expr = parseOrExpr();
 
-		expr = null;
+		this.currentToken = scanner.scan();
+
+		// if optional assignment present
+		if (currentToken.kind == ASSIGN)
+        {
+            expr = parseExpression();
+            // TODO: How do we combine the optional expression with the OrExpr?
+        }
+
 		return expr;
 	}
 
     /*
      * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
-     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals
+     * <MoreFormals> ::= EMPTY | , <Formal> <MoreFormals>
      */
-    private FormalList parseParameters() { }
+    private FormalList parseParameters()
+    {
+        int currentLineNum = this.currentToken.position;
+        FormalList formalList = new FormalList(currentLineNum);
+
+        this.currentToken = scanner.scan();
+
+        // check any parameters that may be present
+        while (currentToken.kind != RPAREN)
+        {
+            // Skip over commas
+            if (currentToken.kind == COMMA)
+            {
+                this.currentToken = scanner.scan();
+            }
+            Formal formal = parseFormal();
+            formalList.addElement(formal);
+            this.currentToken = scanner.scan();
+        }
+        return formalList;
+    }
 
     /*
      * <Type> ::= <Identifier> <Brackets>
      * <Brackets> ::= EMPTY | [ ]
      */
-    private String parseType() { }
+    private String parseType()
+    {
+        String type = parseIdentifier();
 
-    private String parseIdentifier() { }
+        this.currentToken = scanner.scan();
+        if (currentToken.kind == LBRACKET) // check for brackets
+        {
+            this.currentToken = scanner.scan();
+
+            if (currentToken.kind != RBRACKET)
+            {
+                // TODO: Whinge at missing bracket!
+            }
+            else
+            {
+                type += "[]";
+            }
+        }
+
+        return type;
+    }
+
+    private String parseIdentifier()
+    {
+        if (currentToken.kind == IDENTIFIER)
+        {
+            return currentToken.getSpelling();
+        }
+        else
+        {
+            return null; // TODO: Whinge?
+        }
+    }
 
     /* Statements
      *  <Stmt> ::= <WhileStmt> | <ReturnStmt> | <BreakStmt> | <DeclStmt>
@@ -400,6 +414,7 @@ public class Parser
 
         switch (currentToken.kind)
         {
+            // TODO: Should all of the methods called here do the checking for braces?
             case IF:
                 stmt = parseIf();
                 break;
@@ -483,7 +498,7 @@ public class Parser
                 expr = parseExpression();
                 this.currentToken = this.scanner.scan();
                 if(this.currentToken.kind==RPAREN){
-                    thenStmt = parseStatement();
+                    thenStmt = parseStatement(); // TODO: does this account for braces? Cuz I don't think parseStatement does
                     this.currentToken = this.scanner.scan();
                     if(this.currentToken.kind==ELSE){
                         elseStmt = parseStatement();
