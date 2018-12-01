@@ -669,12 +669,12 @@ public class Parser
             this.currentToken = this.scanner.scan();
             Expr primary = parseExpression();
 
-            this.currentToken = this.scanner.scan();
+            //this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RPAREN)
                 this.whinge("Expected closing parenthesis");
 
+            this.currentToken = this.scanner.scan();
             return primary;
-            //this.currentToken = this.scanner.scan();
         }
         else if(this.currentToken.kind == INTCONST)
         {
@@ -688,15 +688,28 @@ public class Parser
         {
             return parseStringConst();
         }
-        else if(this.currentToken.kind ==  IDENTIFIER)
+        else if(this.currentToken.kind == IDENTIFIER)  // ugly
         {
+            if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
+            {
 
+            }
         }
         else
             this.whinge("");
 
         return null;
     }
+    /*
+     * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
+     *                               <StringConst> | <VarExpr> | <DispatchExpr>
+     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
+     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
+     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
+     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
+     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
+     */
+
 
     /*
      * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
@@ -787,3 +800,59 @@ public class Parser
     }
 }
 
+/*
+Token ambiguous;
+            String name = "";
+
+            ambiguous = this.currentToken;  // might be name if no prefix
+
+            this.currentToken = this.scanner.scan();
+            if(this.currentToken.kind == DOT)
+            {
+                this.currentToken = this.scanner.scan();
+
+                if( !(ambiguous.spelling.equals("super") || ambiguous.spelling.equals("this")) )
+                    Expr primary =
+
+                if(this.currentToken.kind == IDENTIFIER)
+                {
+                    name = this.currentToken.spelling;
+                }
+            }
+            else if(this.currentToken.kind == LBRACKET)
+            {
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                return new VarExpr(lineNum, null, name);
+            }
+            else if(this.currentToken.kind == LPAREN)
+            {
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                this.currentToken = this.scanner.scan();
+                ExprList actualList = parseArguments();
+
+                if(this.currentToken.kind != RPAREN)
+                    this.whinge("Expecting closing parenthesis");
+
+                this.currentToken = this.scanner.scan();
+                return new DispatchExpr(lineNum, null, name, actualList);
+            }
+            else
+            {
+                // is there a way to catch errors here?
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                return new VarExpr(lineNum, null, name);
+            }
+
+
+
+
+
+            new VarExpr(lineNum, );
+            new DispatchExpr(lineNum, );
+ */
