@@ -695,7 +695,7 @@ public class Parser
         //TODO
         int position = currentToken.position;
         Expr left = parseMultExpr();
-        while(this.currentToken.spelling.equals("+")||this.currentToken.spelling.equals("-")){
+        while(this.currentToken.kind==PLUSMINUS){
             this.currentToken=this.scanner.scan();
             Expr right = parseMultExpr();
             if(this.currentToken.spelling=="+")
