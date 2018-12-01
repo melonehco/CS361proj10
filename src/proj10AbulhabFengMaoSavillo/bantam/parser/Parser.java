@@ -998,6 +998,7 @@ public class Parser
         }
         else if(this.currentToken.kind == IDENTIFIER)  // ugly
         {
+            // t1: this, super, primary, empty
             if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
             {
 
