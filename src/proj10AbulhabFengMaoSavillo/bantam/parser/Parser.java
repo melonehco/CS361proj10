@@ -291,13 +291,90 @@ public class Parser
      * <BlockStmt> ::= { <Body> }
      * <Body> ::= EMPTY | <Stmt> <Body>
      */
-    private Stmt parseBlock() { }
+    private Stmt parseBlock()
+	{
+		int initialPosition = currentToken.position;
+		String type = this.parseType();
+		String nameIdentifier = this.parseIdentifier();
+		BlockStmt blockStmt = null;
+
+		scanner.scan();
+		if (this.currentToken.kind == LCURLY)
+		{
+			StmtList stmtList = new StmtList(initialPosition);
+			blockStmt = new BlockStmt(initialPosition, stmtList);
+			while (this.currentToken.kind != RCURLY)
+			{
+				advancePastCommentary();
+				parseStatement();
+				// TODO: How can I add the statements to the stmList??
+			}
+		}
+		else
+		{
+			// TODO: error
+			// Does this have to account for blocks with only one line that use no curly braces?
+		}
+
+		return blockStmt;
+	}
 
     /*
-     * <Expression> ::= <LogicalOrExpr> <OptionalAssignment>
+     * <Expression> ::= <LogicalOrExpr> <OptionalAssignment> TODO: "LogicalOrExpr"??
      * <OptionalAssignment> ::= EMPTY | = <Expression>
      */
-    private Expr parseExpression() { }
+    private Expr parseExpression()
+	{
+		Expr expr;
+
+//		switch (currentToken.kind)
+//		{
+//			case RCURLY:
+//				expr = parseOrExpr();
+//				break;
+//			case LCURLY:
+//				expr = parseAndExpr();
+//				break;
+//			case VAR:
+//				expr = parseEqualityExpr();
+//				break;
+//			case RETURN:
+//				expr = parseEqualityExpr();
+//				break;
+//			case FOR:
+//				expr = parseRelationalExpr();
+//				break;
+//			case WHILE:
+//				expr = parseAddExpr();
+//				break;
+//			case BREAK:
+//				expr = parseMultExpr();
+//				break;
+//			case BREAK:
+//				expr = parseNewCastOrUnary();
+//				break;
+//			case NEW:
+//				expr = parseNew();
+//				break;
+//			case BREAK:
+//				expr = parseCast();
+//				break;
+//			case BREAK:
+//				expr = parseUnaryPrefix();
+//				break;
+//			case BREAK:
+//				expr = parseUnaryPostfix();
+//				break;
+//			case BREAK:
+//				expr = parsePrimary();
+//				break;
+//			case BREAK:
+//				expr = parseExpressionStmt();
+//		}
+
+		expr = null;
+		return expr;
+	}
 
     /*
      * <Parameters>  ::= EMPTY | <Formal> <MoreFormals>
