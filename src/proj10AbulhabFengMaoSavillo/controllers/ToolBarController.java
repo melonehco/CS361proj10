@@ -13,6 +13,7 @@ import javafx.scene.control.Button;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import javafx.event.Event;
 import proj10AbulhabFengMaoSavillo.JavaCodeArea;
+import proj10AbulhabFengMaoSavillo.bantam.ast.Program;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Scanner;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Token;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error;
@@ -198,26 +199,46 @@ public class ToolBarController
                     outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
                 }
 
+
                 if (shouldDrawAST)
                 {
                     Parser parser = new Parser(errorHandler);
-                    new Drawer().draw(file.getName(), parser.parse(filename));
-                }
+                    Program ast = parser.parse(filename);
 
-                List<Error> errorList = errorHandler.getErrorList();
-                int errorCount = errorList.size();
-                if (errorCount == 0)
-                {
-                    Platform.runLater(() -> console.appendText("No errors detected\n"));
+                    List<Error> errorList = errorHandler.getErrorList();
+                    int errorCount = errorList.size();
+                    if (errorCount == 0)
+                    {
+                        Platform.runLater(() -> console.appendText("No errors detected\n"));
+                        Platform.runLater(() -> new Drawer().draw(file.getName(), ast));
+                    }
+                    else
+                    {
+                        errorList.forEach((error) ->
+                                          {
+                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                          });
+                        String msg = String.format("Found %d error(s)\n", errorCount);
+                        Platform.runLater(() -> console.appendText(msg));
+                    }
                 }
-                else
+                else //TODO clean here
                 {
-                    errorList.forEach((error) ->
-                                      {
-                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                      });
-                    String msg = String.format("Found %d error(s)\n", errorCount);
-                    Platform.runLater(() -> console.appendText(msg));
+                    List<Error> errorList = errorHandler.getErrorList();
+                    int errorCount = errorList.size();
+                    if (errorCount == 0)
+                    {
+                        Platform.runLater(() -> console.appendText("No errors detected\n"));
+                    }
+                    else
+                    {
+                        errorList.forEach((error) ->
+                                          {
+                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                          });
+                        String msg = String.format("Found %d error(s)\n", errorCount);
+                        Platform.runLater(() -> console.appendText(msg));
+                    }
                 }
 
                 return null;
