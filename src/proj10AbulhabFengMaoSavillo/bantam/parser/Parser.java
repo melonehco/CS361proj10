@@ -158,7 +158,7 @@ public class Parser
             }
             else
             {
-                //TODO error
+                this.whinge("Expecting valid class name in class declaration.");
             }
 
             this.currentToken = scanner.scan();
@@ -172,7 +172,7 @@ public class Parser
                 }
                 else
                 {
-                    //TODO error
+                    this.whinge("Missing name of class to extend in class declaration.");
                 }
             }
 
@@ -238,7 +238,7 @@ public class Parser
             //check for closing parenthesis
             if (this.currentToken.kind != RPAREN)
             {
-                //TODO: error: Missing closing parenthesis.
+                this.whinge("Missing closing parenthesis in method declaration.");
             }
             else //if present, move on to next token
             {
@@ -268,7 +268,7 @@ public class Parser
                 //check for semicolon
                 if (this.currentToken.kind != SEMICOLON)
                 {
-                    //TODO: error: Missing ending semicolon.
+                    this.whinge("Missing ending semicolon in field declaration.");
                 }
                 else
                 {
@@ -278,8 +278,11 @@ public class Parser
             else
             {
                 //invalid syntax
-                //TODO: error: Invalid field initialization.
+                this.whinge("Invalid field declaration.");
             }
+            
+            //move past ending semicolon
+            this.currentToken = this.scanner.scan();
         }
 
         return member;
