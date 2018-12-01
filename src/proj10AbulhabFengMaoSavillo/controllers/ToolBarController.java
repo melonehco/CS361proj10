@@ -17,6 +17,8 @@ import proj10AbulhabFengMaoSavillo.bantam.lexer.Scanner;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Token;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error;
 import proj10AbulhabFengMaoSavillo.bantam.util.ErrorHandler;
+import proj10AbulhabFengMaoSavillo.bantam.parser.Parser;
+import proj10AbulhabFengMaoSavillo.bantam.treedrawer.Drawer;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -115,63 +117,12 @@ public class ToolBarController
 
     }
 
-    public void scanFile(File file, boolean shouldGenerateFile)
-    {
-
-        ErrorHandler errorHandler = new ErrorHandler();
-        Scanner scanner = new Scanner(file.getAbsolutePath(), errorHandler);
-
-        Task task = new Task()
-        {
-            @Override
-            protected Object call() throws Exception
-            {
-                JavaCodeArea outputArea;
-                // Request that the filemenucontroller create a new tab in which to print
-                if (shouldGenerateFile) { outputArea = requestAreaForOutput(); }
-
-                // Scan the file and retrieve each token
-                Token currentToken = scanner.scan();
-                while (currentToken.kind != Token.Kind.EOF)
-                {
-                    String s = currentToken.toString();
-                    Platform.runLater(() -> outputArea.appendText(s + "\n"));
-                    currentToken = scanner.scan();
-                }
-
-                outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
-
-                List<Error> errorList = errorHandler.getErrorList();
-                int errorCount = errorList.size();
-                if (errorCount == 0)
-                {
-                    Platform.runLater(() -> console.appendText("No errors detected\n"));
-                }
-                else
-                {
-                    errorList.forEach((error) ->
-                                      {
-                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                      });
-                    String msg = String.format("Found %d error(s)", errorCount);
-                    Platform.runLater(() -> console.appendText(msg));
-                }
-
-                return null;
-            }
-        };
-
-        this.thread = new Thread(task);
-        this.thread.setDaemon(true);
-        this.thread.start();
-    }
-
     //TODO better name
     public void engage(Event event, File file)
     {
         boolean shouldGenerateFile = false; // TODO Better names
         boolean shouldDrawAST = false;
-        Button clickedButton = (Button)event.getTarget();
+        Button clickedButton = (Button) event.getTarget();
         switch (clickedButton.getId())
         {
             case "scanButton":
@@ -214,7 +165,68 @@ public class ToolBarController
                               consoleLength = 0;
                           });
 
+        this.scanFile(file, shouldGenerateFile, shouldDrawAST);
 
+    }
+
+    public void scanFile(File file, boolean shouldGenerateFile, boolean shouldDrawAST)
+    {
+        String filename = file.getAbsolutePath();
+
+        Task task = new Task()
+        {
+            @Override
+            protected Object call() throws Exception
+            {
+                ErrorHandler errorHandler = new ErrorHandler();
+                Scanner scanner = new Scanner(filename, errorHandler);
+
+                // Request that the filemenucontroller create a new tab in which to print
+                if (shouldGenerateFile)
+                {
+                    JavaCodeArea outputArea = requestAreaForOutput();
+
+                    // Scan the file and retrieve each token
+                    Token currentToken = scanner.scan();
+                    while (currentToken.kind != Token.Kind.EOF)
+                    {
+                        String s = currentToken.toString();
+                        Platform.runLater(() -> outputArea.appendText(s + "\n"));
+                        currentToken = scanner.scan();
+                    }
+
+                    outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
+                }
+
+                if (shouldDrawAST)
+                {
+                    Parser parser = new Parser(errorHandler);
+                    new Drawer().draw(file.getName(), parser.parse(filename));
+                }
+
+                List<Error> errorList = errorHandler.getErrorList();
+                int errorCount = errorList.size();
+                if (errorCount == 0)
+                {
+                    Platform.runLater(() -> console.appendText("No errors detected\n"));
+                }
+                else
+                {
+                    errorList.forEach((error) ->
+                                      {
+                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                      });
+                    String msg = String.format("Found %d error(s)\n", errorCount);
+                    Platform.runLater(() -> console.appendText(msg));
+                }
+
+                return null;
+            }
+        };
+
+        this.thread = new Thread(task);
+        this.thread.setDaemon(true);
+        this.thread.start();
     }
 
     /**
