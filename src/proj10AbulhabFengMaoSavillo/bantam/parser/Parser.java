@@ -19,7 +19,6 @@ import static proj10AbulhabFengMaoSavillo.bantam.lexer.Token.Kind.*;
 
 import proj10AbulhabFengMaoSavillo.bantam.ast.*;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error;
-import sun.tools.java.Identifier;
 
 
 /**
