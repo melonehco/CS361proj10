@@ -628,9 +628,24 @@ public class Parser
     private Expr parseMultExpr() { }
 
     /*
-     * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
+     * <NewCastOrUnary> ::= <NewExpression> | <CastExpression> | <UnaryPrefix>
      */
-    private Expr parseNewCastOrUnary() { }
+    private Expr parseNewCastOrUnary()
+    {
+    	//determine which rule to follow based on first token
+    	if (this.currentToken.kind == NEW)
+    	{
+    		return this.parseNew();
+    	}
+    	else if (this.currentToken.kind == CAST)
+    	{
+    		return this.parseCast();
+    	}
+    	else
+    	{
+    		return this.parseUnaryPrefix();
+    	}
+    }
 
     /*
      * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
