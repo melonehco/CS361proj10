@@ -159,7 +159,7 @@ public class Parser
             }
             else
             {
-                //TODO error
+                this.whinge("Expecting valid class name in class declaration.");
             }
 
             this.currentToken = scanner.scan();
@@ -173,7 +173,7 @@ public class Parser
                 }
                 else
                 {
-                    //TODO error
+                    this.whinge("Missing name of class to extend in class declaration.");
                 }
             }
 
@@ -239,7 +239,7 @@ public class Parser
             //check for closing parenthesis
             if (this.currentToken.kind != RPAREN)
             {
-                //TODO: error: Missing closing parenthesis.
+                this.whinge("Missing closing parenthesis in method declaration.");
             }
             else //if present, move on to next token
             {
@@ -269,7 +269,7 @@ public class Parser
                 //check for semicolon
                 if (this.currentToken.kind != SEMICOLON)
                 {
-                    //TODO: error: Missing ending semicolon.
+                    this.whinge("Missing ending semicolon in field declaration.");
                 }
                 else
                 {
@@ -279,8 +279,11 @@ public class Parser
             else
             {
                 //invalid syntax
-                //TODO: error: Invalid field initialization.
+                this.whinge("Invalid field declaration.");
             }
+            
+            //move past ending semicolon
+            this.currentToken = this.scanner.scan();
         }
 
         return member;
@@ -713,31 +716,201 @@ public class Parser
     private Expr parseMultExpr() { }
 
     /*
-     * <NewCastOrUnary> ::= < NewExpression> | <CastExpression> | <UnaryPrefix>
+     * <NewCastOrUnary> ::= <NewExpression> | <CastExpression> | <UnaryPrefix>
      */
-    private Expr parseNewCastOrUnary() { }
+    private Expr parseNewCastOrUnary()
+    {
+    	//determine which rule to follow based on first token
+    	if (this.currentToken.kind == NEW)
+    	{
+    		return this.parseNew();
+    	}
+    	else if (this.currentToken.kind == CAST)
+    	{
+    		return this.parseCast();
+    	}
+    	else
+    	{
+    		return this.parseUnaryPrefix();
+    	}
+    }
 
     /*
      * <NewExpression> ::= NEW <Identifier> ( ) | NEW <Identifier> [ <Expression> ]
      */
-    private Expr parseNew() { }
+	private Expr parseNew()
+	{ 
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		this.currentToken = this.scanner.scan(); //move past NEW
+		String type = this.parseIdentifier();
+		
+		//handle new object
+		if (this.currentToken.kind == LPAREN)
+		{
+			result = new NewExpr(position, type);
+			
+			//check for closing parenthesis
+			this.currentToken = this.scanner.scan();
+			if (this.currentToken.kind != RPAREN)
+			{
+				this.whinge("Missing closing parenthesis in new object expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
+			}
+		}
+		//handle new array
+		else if (this.currentToken.kind == LBRACKET)
+		{
+			this.currentToken = this.scanner.scan();
+			Expr size = this.parseExpression();
+			
+			result = new NewArrayExpr(position, type, size);
+			
+			//check for closing bracket
+			if (this.currentToken.kind != RBRACKET)
+			{
+				this.whinge("Missing closing bracket in new array expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
+			}
+		}
+		else
+		{
+			this.whinge("Invalid new object/array expression.");
+		}
+		
+		return result;
+	}
 
     /*
      * <CastExpression> ::= CAST ( <Type> , <Expression> )
      */
-    private Expr parseCast() { }
+	private Expr parseCast()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		scanner.scan();
+		if (this.currentToken.kind != LPAREN)
+		{
+			this.whinge("Missing opening parenthesis in cast expression.");
+		}
+		else
+		{
+			this.currentToken = this.scanner.scan();
+			String type = this.parseType();
+			
+			//check for comma
+			this.currentToken = this.scanner.scan();
+			if (this.currentToken.kind != COMMA)
+			{
+				this.whinge("Missing comma in cast expression.");
+			}
+			
+			this.currentToken = this.scanner.scan();
+			Expr castedExpr = this.parseExpression();
+			result = new CastExpr(position, type, castedExpr);
+			
+			//check for closing parenthesis
+			if (this.currentToken.kind != RPAREN)
+			{
+				this.whinge("Missing closing parenthesis in cast expression.");
+			}
+		}
+		
+		return result;
+	}
 
     /*
      * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
      * <PrefixOp> ::= - | ! | ++ | --
      */
-    private Expr parseUnaryPrefix() { }
+	private Expr parseUnaryPrefix()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		if (this.currentToken.kind == PLUSMINUS)
+		{
+			//unary negation
+			
+			//check to make sure not +
+			if (this.currentToken.spelling.equals("+"))
+			{
+				this.whinge("Unexpected + prefix to expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
+				Expr innerPrefix = this.parseUnaryPrefix();
+				result = new UnaryNegExpr(position, innerPrefix);
+			}
+		}
+		else if (this.currentToken.kind == UNARYNOT)
+		{
+			//unary not
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryNotExpr(position, innerPrefix);
+		}
+		else if (this.currentToken.kind == UNARYINCR)
+		{
+			//pre-increment
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryIncrExpr(position, innerPrefix, false);
+		}
+		else if (this.currentToken.kind == UNARYDECR)
+		{
+			//pre-decrement
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryDecrExpr(position, innerPrefix, false);
+		}
+		else
+		{
+			//no prefix (base case)
+			result = this.parseUnaryPostfix();
+		}
+		
+		return result;
+	}
 
     /*
      * <UnaryPostfix> ::= <Primary> <PostfixOp>
      * <PostfixOp> ::= ++ | -- | EMPTY
      */
-    private Expr parseUnaryPostfix() { }
+	private Expr parseUnaryPostfix()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		Expr primary = this.parsePrimary();
+		
+		if (this.currentToken.kind == UNARYINCR)
+		{
+			//post-increment
+			result = new UnaryIncrExpr(position, primary, true);
+		}
+		else if (this.currentToken.kind == UNARYDECR)
+		{
+			//post-decrement
+			result = new UnaryDecrExpr(position, primary, true);
+		}
+		else
+		{
+			//no postfix
+			result = primary;
+		}
+		
+		return result;
+	}
 
     /*
      * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
@@ -757,12 +930,12 @@ public class Parser
             this.currentToken = this.scanner.scan();
             Expr primary = parseExpression();
 
-            this.currentToken = this.scanner.scan();
+            //this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RPAREN)
                 this.whinge("Expected closing parenthesis");
 
+            this.currentToken = this.scanner.scan();
             return primary;
-            //this.currentToken = this.scanner.scan();
         }
         else if(this.currentToken.kind == INTCONST)
         {
@@ -776,21 +949,50 @@ public class Parser
         {
             return parseStringConst();
         }
-        else if(this.currentToken.kind ==  IDENTIFIER)
+        else if(this.currentToken.kind == IDENTIFIER)  // ugly
         {
+            if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
+            {
 
+            }
         }
         else
             this.whinge("");
 
         return null;
     }
+    /*
+     * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
+     *                               <StringConst> | <VarExpr> | <DispatchExpr>
+     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
+     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
+     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
+     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
+     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
+     */
+
 
     /*
      * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
      * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
      */
-    private ExprList parseArguments() { }
+	private ExprList parseArguments()
+	{
+		int position = this.currentToken.position;
+		ExprList argList = new ExprList(position);
+		
+		//parse first argument, which is always present
+		argList.addElement(this.parseExpression());
+		
+		//parse other arguments if present
+		while (this.currentToken.kind == COMMA)
+		{
+			this.currentToken = this.scanner.scan(); //move past comma
+			argList.addElement(this.parseExpression());
+		}
+		
+		return argList;
+	}
 
     //----------------------------------------
     //Terminals
@@ -875,3 +1077,59 @@ public class Parser
     }
 }
 
+/*
+Token ambiguous;
+            String name = "";
+
+            ambiguous = this.currentToken;  // might be name if no prefix
+
+            this.currentToken = this.scanner.scan();
+            if(this.currentToken.kind == DOT)
+            {
+                this.currentToken = this.scanner.scan();
+
+                if( !(ambiguous.spelling.equals("super") || ambiguous.spelling.equals("this")) )
+                    Expr primary =
+
+                if(this.currentToken.kind == IDENTIFIER)
+                {
+                    name = this.currentToken.spelling;
+                }
+            }
+            else if(this.currentToken.kind == LBRACKET)
+            {
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                return new VarExpr(lineNum, null, name);
+            }
+            else if(this.currentToken.kind == LPAREN)
+            {
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                this.currentToken = this.scanner.scan();
+                ExprList actualList = parseArguments();
+
+                if(this.currentToken.kind != RPAREN)
+                    this.whinge("Expecting closing parenthesis");
+
+                this.currentToken = this.scanner.scan();
+                return new DispatchExpr(lineNum, null, name, actualList);
+            }
+            else
+            {
+                // is there a way to catch errors here?
+                name = ambiguous.spelling;
+                ambiguous = null;
+
+                return new VarExpr(lineNum, null, name);
+            }
+
+
+
+
+
+            new VarExpr(lineNum, );
+            new DispatchExpr(lineNum, );
+ */
