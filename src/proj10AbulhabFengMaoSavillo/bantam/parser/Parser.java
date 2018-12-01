@@ -625,7 +625,40 @@ public class Parser
      *               % <NewCastOrUnary> <MoreNCU> |
      *               EMPTY
      */
-    private Expr parseMultExpr() { }
+    private Expr parseMultExpr()
+    {
+    	int position = this.currentToken.position;
+    	Expr result = this.parseNewCastOrUnary();
+    	
+    	//build rest of MultiExpr while there are more operands
+    	Expr right;
+    	while (this.currentToken.kind == MULDIV)
+    	{
+    		if (this.currentToken.spelling.equals("*"))
+    		{
+    			//multiply
+    			this.currentToken = this.scanner.scan();
+    			right = this.parseNewCastOrUnary();
+    			result = new BinaryArithTimesExpr(position, result, right);
+    		}
+    		else if (this.currentToken.spelling.equals("/"))
+    		{
+    			//divide
+    			this.currentToken = this.scanner.scan();
+    			right = this.parseNewCastOrUnary();
+    			result = new BinaryArithDivideExpr(position, result, right);
+    		}
+    		else
+    		{
+    			//modulo
+    			this.currentToken = this.scanner.scan();
+    			right = this.parseNewCastOrUnary();
+    			result = new BinaryArithModulusExpr(position, result, right);
+    		}
+    	}
+    	
+    	return result;
+    }
 
     /*
      * <NewCastOrUnary> ::= <NewExpression> | <CastExpression> | <UnaryPrefix>
