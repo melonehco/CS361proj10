@@ -19,6 +19,7 @@ import static proj10AbulhabFengMaoSavillo.bantam.lexer.Token.Kind.*;
 
 import proj10AbulhabFengMaoSavillo.bantam.ast.*;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error;
+import sun.tools.java.Identifier;
 
 
 /**
@@ -431,17 +432,52 @@ public class Parser
     /*
      * <WhileStmt> ::= WHILE ( <Expression> ) <Stmt>
      */
-    private Stmt parseWhile() { }
+    private Stmt parseWhile()
+    {
+        if(this.currentToken.kind==WHILE){
+            int position = this.currentToken.position;
+            this.currentToken = this.scanner.scan();
+            if(this.currentToken.kind==LPAREN){
+                this.currentToken=this.scanner.scan();
+                Expr expr = parseExpression();
+                this.currentToken = this.scanner.scan();
+                if(this.currentToken.kind==RPAREN){
+                    this.currentToken=this.scanner.scan();
+                    Stmt stmt = parseStatement();
+                    return new WhileStmt(position,expr,stmt);
+                }
+            }
+        }
+        return null;
+    }
 
     /*
      * <ReturnStmt> ::= RETURN <Expression> ; | RETURN ;
      */
-    private Stmt parseReturn() { }
+    private Stmt parseReturn()
+    {
+        Expr expr = null;
+        if(this.currentToken.kind==RETURN){
+            int position = this.currentToken.position;
+            this.currentToken=this.scanner.scan();
+            if (this.currentToken.kind!=SEMICOLON) {
+                expr = parseExpression();
+            }
+            return new ReturnStmt(position,expr);
+        }
+        return null;
+    }
 
     /*
      * BreakStmt> ::= BREAK ;
      */
-    private Stmt parseBreak() { }
+    private Stmt parseBreak()
+    {
+        if(this.currentToken.kind==BREAK){
+            return new BreakStmt(this.currentToken.position);
+        }
+        return null;
+    }
 
     //-----------------------------------------
     // Expressions
@@ -450,13 +486,34 @@ public class Parser
     /*
      * <ExpressionStmt> ::= <Expression> ;
      */
-    private ExprStmt parseExpressionStmt() { }
+    private ExprStmt parseExpressionStmt()
+    {
+        advancePastCommentary();
+        int position = this.currentToken.position;
+        Expr expr = parseExpression();
+        return new ExprStmt(position,expr);
+    }
 
     /*
      * <DeclStmt> ::= VAR <Identifier> = <Expression> ;
      * every local variable must be initialized
      */
-    private Stmt parseDeclStmt() { }
+    private Stmt parseDeclStmt()
+    {
+        int position = 0;
+        if(this.currentToken.kind==VAR){
+            this.currentToken=this.scanner.scan();
+            if(this.currentToken.kind==IDENTIFIER){
+                String identifier = parseIdentifier();
+                this.currentToken=this.scanner.scan();
+                if(this.currentToken.kind==ASSIGN){
+                    Expr expr = parseExpression();
+                    return new DeclStmt(position,identifier,expr);
+                }
+            }
+        }
+        return null;
+    }
 
     /*
      * <ForStmt> ::= FOR ( <Start> ; <Terminate> ; <Increment> ) <STMT>
@@ -464,7 +521,38 @@ public class Parser
      * <Terminate> ::= EMPTY | <Expression>
      * <Increment> ::= EMPTY | <Expression>
      */
-    private Stmt parseFor() { }
+    private Stmt parseFor()
+    {
+        int position = 0;
+        Expr start = null;
+        Expr terminate = null;
+        Expr increment = null;
+
+        if (this.currentToken.kind==FOR){
+            position = this.currentToken.position;
+            this.currentToken=this.scanner.scan();
+            if (this.currentToken.kind==LPAREN){
+                this.currentToken=this.scanner.scan();
+                if(this.currentToken.kind!=SEMICOLON){
+                    start = parseExpression();
+                }
+                else this.currentToken=this.scanner.scan();
+
+                if(this.currentToken.kind!=SEMICOLON){
+                    terminate = parseExpression();
+                }
+                else this.currentToken=this.scanner.scan();
+
+                if (this.currentToken.kind!=RPAREN){
+                    increment = parseExpression();
+                }
+                else this.currentToken=this.scanner.scan();
+                Stmt bodyStmt = parseStatement();
+                return new ForStmt(position, start,terminate,increment,bodyStmt)
+            }
+        }
+        return null;
+    }
 
     /*
      * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
