@@ -19,7 +19,7 @@ class Jaemin extends Dream{
          */
         
         if(i>=7||j<=22||k==0){
-            i=i*10;
+            i=i*10/2%5;
             j=i/10;
             k=i+j-k;
         }
@@ -27,8 +27,17 @@ class Jaemin extends Dream{
         
         return 0;
         
-        //don't feel like figuring out how to use this in Bantam yet so I'm just putting it here
-        : , cast new instanceof
+        //probably not semantically correct, but I'm changing this to be syntactically correct
+        var n;
+        if (m instanceof String)
+            n = cast(m, AnotherString);
+        else
+            n = new Papaya("slam dunk", "walk you home");
+        
+        var o = new String[7];
+        
+        //how does one use a colon in Bantam??
+        :
 	}
 
 }
