@@ -392,7 +392,31 @@ public class Parser
     /*
      * <IfStmt> ::= IF ( <Expr> ) <Stmt> | IF ( <Expr> ) <Stmt> ELSE <Stmt>
      */
-    private Stmt parseIf() { }
+    private Stmt parseIf()
+    {
+        int position = 0;
+        Expr expr = null;
+        Stmt thenStmt = null;
+        Stmt elseStmt = null;
+
+        if(this.currentToken.kind==IF){
+            position = currentToken.position;
+            this.currentToken = this.scanner.scan();
+            if(this.currentToken.kind==LPAREN){
+                expr = parseExpression();
+                this.currentToken = this.scanner.scan();
+                if(this.currentToken.kind==RPAREN){
+                    thenStmt = parseStatement();
+                    this.currentToken = this.scanner.scan();
+                    if(this.currentToken.kind==ELSE){
+                        elseStmt = parseStatement();
+                        this.currentToken = this.scanner.scan();
+                    }
+                }
+            }
+        }
+        return new IfStmt(position,expr,thenStmt,elseStmt);
+    }
 
     /*
      * <LogicalOR> ::= <logicalAND> <LogicalORRest>
@@ -419,6 +443,16 @@ public class Parser
      */
     private Expr parseAndExpr()
     {
+        int position = currentToken.position;
+        Expr left = parseEqualityExpr();
+        while(this.currentToken.spelling.equals("&&")){
+            this.currentToken=this.scanner.scan();
+            Expr right = parseEqualityExpr();
+            left = new BinaryLogicAndExpr(position,left,right);
+        }
+        return left;
+
+
     }
 
     /*
@@ -426,19 +460,83 @@ public class Parser
      *                     <RelationalExpr>
      * <equalOrNotEqual> ::=  == | !=
      */
-    private Expr parseEqualityExpr() { }
+    private Expr parseEqualityExpr()
+    {
+        int position = currentToken.position;
+        Expr left = parseRelationalExpr();
+        Expr right = null;
+        this.currentToken=scanner.scan();
+        if (this.currentToken.spelling=="=="){
+            this.currentToken=this.scanner.scan();
+            right = parseRelationalExpr();
+            return new BinaryCompEqExpr(position,left,right);
+        }
+        else if (this.currentToken.spelling=="!="){
+            this.currentToken=this.scanner.scan();
+            right = parseRelationalExpr();
+            return new BinaryCompNeExpr(position,left,right);
+        }
+        else {
+            return null;
+            //TODO:ERROR
+        }
+
+    }
 
     /*
      * <RelationalExpr> ::=<AddExpr> | <AddExpr> <ComparisonOp> <AddExpr>
      * <ComparisonOp> ::=  < | > | <= | >= | INSTANCEOF
      */
-    private Expr parseRelationalExpr() { }
+    private Expr parseRelationalExpr()
+    {
+        int position = currentToken.position;
+        Expr left = parseRelationalExpr();
+        Expr right = null;
+        this.currentToken=scanner.scan();
+        switch(this.currentToken.spelling)
+        {
+            case "<":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompLtExpr(position,left,right);
+            case ">":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompGtExpr(position,left,right);
+            case "<=":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompLeqExpr(position,left,right);
+            case ">=":
+                this.currentToken=this.scanner.scan();
+                right = parseRelationalExpr();
+                return new BinaryCompGeqExpr(position,left,right);
+        }
+
+        return null;
+        //TODO:ERROR
+
+    }
 
     /*
      * <AddExpr>::＝ <MultExpr> <MoreMultExpr>
      * <MoreMultExpr> ::= EMPTY | + <MultExpr> <MoreMultExpr> | - <MultExpr> <MoreMultExpr>
      */
-    private Expr parseAddExpr() { }
+    private Expr parseAddExpr()
+    {
+        //TODO
+        int position = currentToken.position;
+        Expr left = parseMultExpr();
+        while(this.currentToken.spelling.equals("+")||this.currentToken.spelling.equals("-")){
+            this.currentToken=this.scanner.scan();
+            Expr right = parseMultExpr();
+            if(this.currentToken.spelling=="+")
+                left = new BinaryArithPlusExpr(position,left,right);
+            else if(this.currentToken.spelling=="-")
+                left = new BinaryArithMinusExpr(position,left,right);
+        }
+        return left;
+    }
 
     /*
      * <MultiExpr> ::= <NewCastOrUnary> <MoreNCU>
