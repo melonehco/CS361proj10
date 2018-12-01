@@ -443,19 +443,25 @@ public class Parser
     private Stmt parseWhile()
     {
         int lineNum = this.currentToken.position;
+
         this.currentToken = this.scanner.scan();
         if (this.currentToken.kind == LPAREN)
         {
             this.currentToken = this.scanner.scan();
             Expr expr = parseExpression();
-            this.currentToken = this.scanner.scan();
+
             if (this.currentToken.kind == RPAREN)
             {
                 this.currentToken = this.scanner.scan();
                 Stmt stmt = parseStatement();
+
                 return new WhileStmt(lineNum, expr, stmt);
             }
+            else
+                this.whinge("Expected closing parenthesis!!");
         }
+        else
+            this.whinge("Expected opening parenthesis");
 
         return null;
     }
