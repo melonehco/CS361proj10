@@ -178,7 +178,7 @@ public class Parser
 
             if (this.currentToken.kind != LCURLY)
             {
-                this.whinge("Expecting left brace.");
+                this.whinge("Expected left brace.");
             }
 
             while (this.currentToken.kind != RCURLY)
@@ -485,7 +485,43 @@ public class Parser
      * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
      * <DispatchExprPrefix> ::= <Primary> . | EMPTY
      */
-    private Expr parsePrimary() { }
+    private Expr parsePrimary()
+    {
+        int lineNum = this.currentToken.position;
+
+        if (this.currentToken.kind == LPAREN)
+        {
+            this.currentToken = this.scanner.scan();
+            Expr primary = parseExpression();
+
+            this.currentToken = this.scanner.scan();
+            if (this.currentToken.kind != RPAREN)
+                this.whinge("Expected closing parenthesis");
+
+            return primary;
+            //this.currentToken = this.scanner.scan();
+        }
+        else if(this.currentToken.kind == INTCONST)
+        {
+            return parseIntConst();
+        }
+        else if(this.currentToken.kind == BOOLEAN)
+        {
+            return parseBoolean();
+        }
+        else if(this.currentToken.kind == STRCONST)
+        {
+            return parseStringConst();
+        }
+        else if(this.currentToken.kind ==  IDENTIFIER)
+        {
+
+        }
+        else
+            this.whinge("");
+
+        return null;
+    }
 
     /*
      * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
@@ -510,10 +546,10 @@ public class Parser
             type = parseIdentifier();
         }
         else
-            this.whinge("Expected valid type identifier");
+            this.whinge("Expected valid type name");
 
-        this.currentToken = this.scanner.scan();
-        if (this.currentToken.kind == LBRACKET)
+        //this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind == LBRACKET)  // optional brackets
         {
             this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RBRACKET)
@@ -529,15 +565,14 @@ public class Parser
         else
             this.whinge("Expected identifier or opening bracket");
 
-
-        this.currentToken = this.scanner.scan();
+        //this.currentToken = this.scanner.scan();
 
         return new Formal(lineNum, type, name);
     }
 
     private String parseOperator()
     {
-        String operator =  this.currentToken.spelling;
+        String operator = this.currentToken.spelling;
 
         this.currentToken = this.scanner.scan();
 
