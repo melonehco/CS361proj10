@@ -458,31 +458,49 @@ public class Parser
      */
 	private Expr parseNew()
 	{ 
-		int position = currentToken.position;
+		int position = this.currentToken.position;
 		Expr result = null;
 		
-		scanner.scan();
+		this.currentToken = this.scanner.scan(); //move past NEW
 		String type = this.parseIdentifier();
 		
+		//handle new object
 		if (this.currentToken.kind == LPAREN)
 		{
-			//new object
 			result = new NewExpr(position, type);
 			
 			//check for closing parenthesis
+			this.currentToken = this.scanner.scan();
 			if (this.currentToken.kind != RPAREN)
 			{
-				//TODO: error
+				this.whinge("Missing closing parenthesis in new object expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
 			}
 		}
+		//handle new array
 		else if (this.currentToken.kind == LBRACKET)
 		{
-			//new array
+			this.currentToken = this.scanner.scan();
+			Expr size = this.parseExpression();
 			
+			result = new NewArrayExpr(position, type, size);
+			
+			//check for closing bracket
+			if (this.currentToken.kind != RBRACKET)
+			{
+				this.whinge("Missing closing bracket in new array expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
+			}
 		}
 		else
 		{
-			//TODO: error: "Invalid new expression"
+			this.whinge("Invalid new object/array expression.");
 		}
 		
 		return result;
@@ -491,21 +509,128 @@ public class Parser
     /*
 	 * <CastExpression> ::= CAST ( <Type> , <Expression> )
      */
-	private Expr parseCast() { }
+	private Expr parseCast()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		scanner.scan();
+		if (this.currentToken.kind != LPAREN)
+		{
+			this.whinge("Missing opening parenthesis in cast expression.");
+		}
+		else
+		{
+			this.currentToken = this.scanner.scan();
+			String type = this.parseType();
+			
+			//check for comma
+			this.currentToken = this.scanner.scan();
+			if (this.currentToken.kind != COMMA)
+			{
+				this.whinge("Missing comma in cast expression.");
+			}
+			
+			this.currentToken = this.scanner.scan();
+			Expr castedExpr = this.parseExpression();
+			result = new CastExpr(position, type, castedExpr);
+			
+			//check for closing parenthesis
+			if (this.currentToken.kind != RPAREN)
+			{
+				this.whinge("Missing closing parenthesis in cast expression.");
+			}
+		}
+		
+		return result;
+	}
 
 
     /*
 	 * <UnaryPrefix> ::= <PrefixOp> <UnaryPrefix> | <UnaryPostfix>
      * <PrefixOp> ::= - | ! | ++ | --
      */
-	private Expr parseUnaryPrefix() { }
+	private Expr parseUnaryPrefix()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		if (this.currentToken.kind == PLUSMINUS)
+		{
+			//unary negation
+			
+			//check to make sure not +
+			if (this.currentToken.spelling.equals("+"))
+			{
+				this.whinge("Unexpected + prefix to expression.");
+			}
+			else
+			{
+				this.currentToken = this.scanner.scan();
+				Expr innerPrefix = this.parseUnaryPrefix();
+				result = new UnaryNegExpr(position, innerPrefix);
+			}
+		}
+		else if (this.currentToken.kind == UNARYNOT)
+		{
+			//unary not
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryNotExpr(position, innerPrefix);
+		}
+		else if (this.currentToken.kind == UNARYINCR)
+		{
+			//pre-increment
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryIncrExpr(position, innerPrefix, false);
+		}
+		else if (this.currentToken.kind == UNARYDECR)
+		{
+			//pre-decrement
+			this.currentToken = this.scanner.scan();
+			Expr innerPrefix = this.parseUnaryPrefix();
+			result = new UnaryDecrExpr(position, innerPrefix, false);
+		}
+		else
+		{
+			//no prefix (base case)
+			result = this.parseUnaryPostfix();
+		}
+		
+		return result;
+	}
 
 
     /*
 	 * <UnaryPostfix> ::= <Primary> <PostfixOp>
      * <PostfixOp> ::= ++ | -- | EMPTY
      */
-	private Expr parseUnaryPostfix() { }
+	private Expr parseUnaryPostfix()
+	{
+		int position = this.currentToken.position;
+		Expr result = null;
+		
+		Expr primary = this.parsePrimary();
+		
+		if (this.currentToken.kind == UNARYINCR)
+		{
+			//post-increment
+			result = new UnaryIncrExpr(position, primary, true);
+		}
+		else if (this.currentToken.kind == UNARYDECR)
+		{
+			//post-decrement
+			result = new UnaryDecrExpr(position, primary, true);
+		}
+		else
+		{
+			//no postfix
+			result = primary;
+		}
+		
+		return result;
+	}
 
 
     /*
@@ -524,7 +649,23 @@ public class Parser
 	 * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
      * <MoreArgs>  ::= EMPTY | , <Expression> <MoreArgs>
      */
-	private ExprList parseArguments() { }
+	private ExprList parseArguments()
+	{
+		int position = this.currentToken.position;
+		ExprList argList = new ExprList(position);
+		
+		//parse first argument, which is always present
+		argList.addElement(this.parseExpression());
+		
+		//parse other arguments if present
+		while (this.currentToken.kind == COMMA)
+		{
+			this.currentToken = this.scanner.scan(); //move past comma
+			argList.addElement(this.parseExpression());
+		}
+		
+		return argList;
+	}
 
 
     /*
