@@ -327,17 +327,36 @@ public class Parser
      */
     private Expr parseExpression()
     {
-        Expr expr;
-
-        expr = parseOrExpr();
+        int lineNum = this.currentToken.position;
+        Expr expr = parseOrExpr();
 
         // if optional assignment present
         if (this.currentToken.kind == ASSIGN)
         {
-            this.currentToken = this.scanner.scan();
+            //make sure left-hand side of assignment is a var
+            if (!(expr instanceof VarExpr))
+                this.whinge("Expected var expression");
 
-            expr = parseExpression();
-            // TODO: How do we combine the optional expression with the OrExpr?
+            String name = ((VarExpr)(expr)).getName();
+
+
+            Expr assignedExpr = parseExpression();
+
+            //if ref is given, get its name
+            Expr ref = ((VarExpr)(expr)).getRef();
+            String refName = null;
+            if (ref != null)
+            {
+                //make sure ref is a VarExpr
+                if (!(ref instanceof VarExpr))
+                    this.whinge("Expected var expression");
+
+                refName = ((VarExpr)ref).getName();
+            }
+
+            this.currentToken = this.scanner.scan(); //move past ASSIGN
+
+            expr = new AssignExpr(lineNum, refName, name, assignedExpr);
         }
 
         return expr;
@@ -352,15 +371,16 @@ public class Parser
         int lineNum = this.currentToken.position;
         FormalList formalList = new FormalList(lineNum);
 
-        // check any parameters that may be present
-        while (this.currentToken.kind != RPAREN)
-        {
-            // Skip over commas
-            if (this.currentToken.kind == COMMA)
-            {
-                this.currentToken = this.scanner.scan();
-            }
 
+        if (this.currentToken.kind == RPAREN) return formalList;
+
+        formalList.addElement(this.parseFormal());
+
+        // check any parameters that may be present
+        while (this.currentToken.kind == COMMA)
+        {
+
+            this.currentToken = this.scanner.scan();
             Formal formal = parseFormal();
             formalList.addElement(formal);
         }
@@ -473,14 +493,15 @@ public class Parser
     {
         Expr expr = null;
         int lineNum = this.currentToken.position;
+
         this.currentToken = this.scanner.scan();
         if (this.currentToken.kind != SEMICOLON)
         {
             expr = parseExpression();
             checkSemicolon();
-
         }
-        else{
+        else
+        {
             this.currentToken = this.scanner.scan();
         }
 
@@ -495,8 +516,8 @@ public class Parser
         int lineNum = this.currentToken.position;
         this.currentToken = this.scanner.scan();
         checkSemicolon();
-        return new BreakStmt(lineNum);
 
+        return new BreakStmt(lineNum);
     }
 
     //-----------------------------------------
@@ -511,7 +532,8 @@ public class Parser
         advancePastCommentary();
         int lineNum = this.currentToken.position;
         Expr expr = parseExpression();
-        checkSemicolon();
+        this.checkSemicolon();
+
         return new ExprStmt(lineNum, expr);
     }
 
@@ -521,23 +543,25 @@ public class Parser
      */
     private Stmt parseDeclStmt()
     {
-        //TODO: how to check "every local variable must be initialized"?
-        int lineNum = 0;
-            this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind == IDENTIFIER)
+        int lineNum = this.currentToken.position;
+
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind == IDENTIFIER)
+        {
+            String identifier = parseIdentifier();
+
+            if (this.currentToken.kind == ASSIGN)
             {
-                String identifier = parseIdentifier();
-                this.currentToken = this.scanner.scan();
-                if (this.currentToken.kind == ASSIGN)
-                {
-                    Expr expr = parseExpression();
-                    if (this.currentToken.kind != SEMICOLON) this.whinge("Expected semicolon");
-                    this.currentToken = this.scanner.scan();
-                    return new DeclStmt(lineNum, identifier, expr);
-                }
-                else whinge("Expected assignment sign");
+                Expr expr = parseExpression();
+                this.checkSemicolon();
+
+                return new DeclStmt(lineNum, identifier, expr);
             }
-            else whinge("Expected identifier");
+            else
+                whinge("Expected assignment sign");
+        }
+        else
+            whinge("Expected identifier");
 
         return null;
     }
@@ -555,32 +579,42 @@ public class Parser
         Expr increment = null;
 
         int lineNum = this.currentToken.position;
+
         this.currentToken = this.scanner.scan();
-        if (this.currentToken.kind == LPAREN)
+        if (this.currentToken.kind != LPAREN)
+            this.whinge("Expected opening parenthesis");
+
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind != SEMICOLON)
         {
-            this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind != SEMICOLON)
-            {
-                start = parseExpression();
-            }
-            else this.currentToken = this.scanner.scan();
-
-            if (this.currentToken.kind != SEMICOLON)
-            {
-                terminate = parseExpression();
-            }
-            else this.currentToken = this.scanner.scan();
-
-            if (this.currentToken.kind != RPAREN)
-            {
-                increment = parseExpression();
-            }
-            else this.currentToken = this.scanner.scan();
-            Stmt bodyStmt = parseStatement();
-            return new ForStmt(lineNum, start, terminate, increment, bodyStmt);
+            start = parseExpression();
+            this.checkSemicolon();
         }
+        else
+            this.currentToken = this.scanner.scan();
 
-        return null;
+        if (this.currentToken.kind != SEMICOLON)
+        {
+            terminate = parseExpression();
+            this.checkSemicolon();
+        }
+        else
+            this.currentToken = this.scanner.scan();
+
+        if (this.currentToken.kind != RPAREN)
+        {
+            increment = parseExpression();
+
+            this.currentToken = this.scanner.scan();
+            if (this.currentToken.kind != RPAREN)
+                this.whinge("Expected closing parenthesis");
+        }
+        else
+            this.currentToken = this.scanner.scan();
+
+        Stmt bodyStmt = parseStatement();
+
+        return new ForStmt(lineNum, start, terminate, increment, bodyStmt);
     }
 
     /*
@@ -593,24 +627,25 @@ public class Parser
         Stmt elseStmt = null;
 
         int lineNum = currentToken.position;
+
         this.currentToken = this.scanner.scan();
-        if (this.currentToken.kind == LPAREN)
+        if (this.currentToken.kind != LPAREN)
+            this.whinge("Expected opening parenthesis");
+
+        this.currentToken = this.scanner.scan();
+        expr = parseExpression();
+
+        if (this.currentToken.kind != RPAREN)
+            this.whinge("Expected closing parenthesis");
+
+        this.currentToken = this.scanner.scan();
+        thenStmt = parseStatement();
+
+        if (this.currentToken.kind == ELSE)
         {
-            expr = parseExpression();
             this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind == RPAREN)
-            {
-                thenStmt = parseStatement(); // TODO: does this account for braces? Cuz I don't think parseStatement does
-                this.currentToken = this.scanner.scan();
-                if (this.currentToken.kind == ELSE)
-                {
-                    elseStmt = parseStatement();
-                    this.currentToken = this.scanner.scan();
-                }
-            }
-            else whinge("Expected closing parenthesis");
+            elseStmt = parseStatement();
         }
-        else whinge("Expected opening parenthesis");
 
         return new IfStmt(lineNum, expr, thenStmt, elseStmt);
     }
@@ -621,12 +656,12 @@ public class Parser
      */
     private Expr parseOrExpr()
     {
-        int lineNum = currentToken.position;
+        int lineNum = this.currentToken.position;
 
         Expr left = parseAndExpr();
         while (this.currentToken.spelling.equals("||"))
         {
-            this.currentToken = scanner.scan();
+            this.currentToken = this.scanner.scan();
             Expr right = parseAndExpr();
             left = new BinaryLogicOrExpr(lineNum, left, right);
         }
@@ -641,6 +676,7 @@ public class Parser
     private Expr parseAndExpr()
     {
         int lineNum = currentToken.position;
+
         Expr left = parseEqualityExpr();
         while (this.currentToken.spelling.equals("&&"))
         {
@@ -648,8 +684,8 @@ public class Parser
             Expr right = parseEqualityExpr();
             left = new BinaryLogicAndExpr(lineNum, left, right);
         }
-        return left;
 
+        return left;
     }
 
     /*
@@ -662,25 +698,27 @@ public class Parser
         int lineNum = currentToken.position;
         Expr left = parseRelationalExpr();
         Expr right = null;
+        Expr expr = null;
+
         this.currentToken = scanner.scan();
-        if (this.currentToken.spelling == "==")
+        if (this.currentToken.spelling.equals("=="))
         {
             this.currentToken = this.scanner.scan();
             right = parseRelationalExpr();
-            return new BinaryCompEqExpr(lineNum, left, right);
+            expr = new BinaryCompEqExpr(lineNum, left, right);
         }
-        else if (this.currentToken.spelling == "!=")
+        else if (this.currentToken.spelling.equals("!="))
         {
             this.currentToken = this.scanner.scan();
             right = parseRelationalExpr();
-            return new BinaryCompNeExpr(lineNum, left, right);
+            expr = new BinaryCompNeExpr(lineNum, left, right);
         }
         else
         {
-            whinge("Expected == or !=");
-            return null;
+            expr = left;
         }
 
+        return expr;
     }
 
     /*
@@ -689,33 +727,44 @@ public class Parser
      */
     private Expr parseRelationalExpr()
     {
-        int lineNum = currentToken.position;
-        Expr left = parseRelationalExpr();
+        int lineNum = this.currentToken.position;
+        Expr left = parseAddExpr();
         Expr right = null;
-        this.currentToken = scanner.scan();
+        Expr expr = null;
+
+        this.currentToken = this.scanner.scan();
         switch (this.currentToken.spelling)
         {
             case "<":
                 this.currentToken = this.scanner.scan();
-                right = parseRelationalExpr();
-                return new BinaryCompLtExpr(lineNum, left, right);
+                right = parseAddExpr();
+                expr = new BinaryCompLtExpr(lineNum, left, right);
+                break;
             case ">":
                 this.currentToken = this.scanner.scan();
-                right = parseRelationalExpr();
-                return new BinaryCompGtExpr(lineNum, left, right);
+                right = parseAddExpr();
+                expr = new BinaryCompGtExpr(lineNum, left, right);
+                break;
             case "<=":
                 this.currentToken = this.scanner.scan();
-                right = parseRelationalExpr();
-                return new BinaryCompLeqExpr(lineNum, left, right);
+                right = parseAddExpr();
+                expr = new BinaryCompLeqExpr(lineNum, left, right);
+                break;
             case ">=":
                 this.currentToken = this.scanner.scan();
-                right = parseRelationalExpr();
-                return new BinaryCompGeqExpr(lineNum, left, right);
+                right = parseAddExpr();
+                expr = new BinaryCompGeqExpr(lineNum, left, right);
+                break;
+            case "INSTANCEOF":
+                this.currentToken = this.scanner.scan();
+                String type = parseType();
+                expr = new InstanceofExpr(lineNum, left, type);
+                break;
+            default:
+                expr = left;
         }
 
-        return null;
-        //TODO:ERROR
-
+        return expr;
     }
 
     /*
@@ -724,17 +773,23 @@ public class Parser
      */
     private Expr parseAddExpr()
     {
-        //TODO
         int lineNum = currentToken.position;
+
         Expr left = parseMultExpr();
         while (this.currentToken.kind == PLUSMINUS)
         {
-            this.currentToken = this.scanner.scan();
-            Expr right = parseMultExpr();
-            if (this.currentToken.spelling == "+")
+            if (this.currentToken.spelling.equals("+"))
+            {
+                this.currentToken = this.scanner.scan();
+                Expr right = parseMultExpr();
                 left = new BinaryArithPlusExpr(lineNum, left, right);
-            else if (this.currentToken.spelling == "-")
+            }
+            else if (this.currentToken.spelling.equals("-"))
+            {
+                this.currentToken = this.scanner.scan();
+                Expr right = parseMultExpr();
                 left = new BinaryArithMinusExpr(lineNum, left, right);
+            }
         }
         return left;
     }
@@ -755,26 +810,26 @@ public class Parser
         Expr right;
         while (this.currentToken.kind == MULDIV)
         {
-            if (this.currentToken.spelling.equals("*"))
+            switch (this.currentToken.spelling)
             {
-                //multiply
-                this.currentToken = this.scanner.scan();
-                right = this.parseNewCastOrUnary();
-                result = new BinaryArithTimesExpr(lineNum, result, right);
-            }
-            else if (this.currentToken.spelling.equals("/"))
-            {
-                //divide
-                this.currentToken = this.scanner.scan();
-                right = this.parseNewCastOrUnary();
-                result = new BinaryArithDivideExpr(lineNum, result, right);
-            }
-            else
-            {
-                //modulo
-                this.currentToken = this.scanner.scan();
-                right = this.parseNewCastOrUnary();
-                result = new BinaryArithModulusExpr(lineNum, result, right);
+                case "*":
+                    //multiply
+                    this.currentToken = this.scanner.scan();
+                    right = this.parseNewCastOrUnary();
+                    result = new BinaryArithTimesExpr(lineNum, result, right);
+                    break;
+                case "/":
+                    //divide
+                    this.currentToken = this.scanner.scan();
+                    right = this.parseNewCastOrUnary();
+                    result = new BinaryArithDivideExpr(lineNum, result, right);
+                    break;
+                case "%":
+                    //modulo
+                    this.currentToken = this.scanner.scan();
+                    right = this.parseNewCastOrUnary();
+                    result = new BinaryArithModulusExpr(lineNum, result, right);
+                    break;
             }
         }
 
@@ -786,19 +841,21 @@ public class Parser
      */
     private Expr parseNewCastOrUnary()
     {
+        Expr expr;
         //determine which rule to follow based on first token
         if (this.currentToken.kind == NEW)
         {
-            return this.parseNew();
+            expr = this.parseNew();
         }
         else if (this.currentToken.kind == CAST)
         {
-            return this.parseCast();
+            expr = this.parseCast();
         }
         else
         {
-            return this.parseUnaryPrefix();
+            expr = this.parseUnaryPrefix();
         }
+        return expr;
     }
 
     /*
@@ -821,7 +878,7 @@ public class Parser
             this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RPAREN)
             {
-                this.whinge("Missing closing parenthesis in new object expression.");
+                this.whinge("Expected closing parenthesis in new object expression.");
             }
             else
             {
@@ -839,7 +896,7 @@ public class Parser
             //check for closing bracket
             if (this.currentToken.kind != RBRACKET)
             {
-                this.whinge("Missing closing bracket in new array expression.");
+                this.whinge("Expected closing bracket in new array expression.");
             }
             else
             {
@@ -862,33 +919,28 @@ public class Parser
         int lineNum = this.currentToken.position;
         Expr result = null;
 
-        scanner.scan();
+        this.currentToken = this.scanner.scan();
         if (this.currentToken.kind != LPAREN)
-        {
-            this.whinge("Missing opening parenthesis in cast expression.");
-        }
-        else
-        {
-            this.currentToken = this.scanner.scan();
-            String type = this.parseType();
+            this.whinge("Expected opening parenthesis in cast expression.");
 
-            //check for comma
-            this.currentToken = this.scanner.scan();
-            if (this.currentToken.kind != COMMA)
-            {
-                this.whinge("Missing comma in cast expression.");
-            }
 
-            this.currentToken = this.scanner.scan();
-            Expr castedExpr = this.parseExpression();
-            result = new CastExpr(lineNum, type, castedExpr);
+        this.currentToken = this.scanner.scan();
+        String type = this.parseType();
 
-            //check for closing parenthesis
-            if (this.currentToken.kind != RPAREN)
-            {
-                this.whinge("Missing closing parenthesis in cast expression.");
-            }
-        }
+        //check for comma
+        this.currentToken = this.scanner.scan();
+        if (this.currentToken.kind != COMMA)
+            this.whinge("Expected comma in cast expression.");
+
+        this.currentToken = this.scanner.scan();
+        Expr castedExpr = this.parseExpression();
+        result = new CastExpr(lineNum, type, castedExpr);
+
+        //check for closing parenthesis
+        if (this.currentToken.kind != RPAREN)
+            this.whinge("Expected closing parenthesis in cast expression.");
+
+        this.currentToken = this.scanner.scan();
 
         return result;
     }
@@ -902,47 +954,51 @@ public class Parser
         int lineNum = this.currentToken.position;
         Expr result = null;
 
-        if (this.currentToken.kind == PLUSMINUS)
+        switch (this.currentToken.kind)
         {
-            //unary negation
+            case PLUSMINUS:
+                //unary negation
 
-            //check to make sure not +
-            if (this.currentToken.spelling.equals("+"))
+                //check to make sure not +
+                if (this.currentToken.spelling.equals("+"))
+                {
+                    this.whinge("Unexpected + prefix to expression.");
+                }
+                else
+                {
+                    this.currentToken = this.scanner.scan();
+                    Expr innerPrefix = this.parseUnaryPrefix();
+                    result = new UnaryNegExpr(lineNum, innerPrefix);
+                }
+                break;
+            case UNARYNOT:
             {
-                this.whinge("Unexpected + prefix to expression.");
-            }
-            else
-            {
+                //unary not
                 this.currentToken = this.scanner.scan();
                 Expr innerPrefix = this.parseUnaryPrefix();
-                result = new UnaryNegExpr(lineNum, innerPrefix);
+                result = new UnaryNotExpr(lineNum, innerPrefix);
+                break;
             }
-        }
-        else if (this.currentToken.kind == UNARYNOT)
-        {
-            //unary not
-            this.currentToken = this.scanner.scan();
-            Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryNotExpr(lineNum, innerPrefix);
-        }
-        else if (this.currentToken.kind == UNARYINCR)
-        {
-            //pre-increment
-            this.currentToken = this.scanner.scan();
-            Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryIncrExpr(lineNum, innerPrefix, false);
-        }
-        else if (this.currentToken.kind == UNARYDECR)
-        {
-            //pre-decrement
-            this.currentToken = this.scanner.scan();
-            Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryDecrExpr(lineNum, innerPrefix, false);
-        }
-        else
-        {
-            //no prefix (base case)
-            result = this.parseUnaryPostfix();
+            case UNARYINCR:
+            {
+                //pre-increment
+                this.currentToken = this.scanner.scan();
+                Expr innerPrefix = this.parseUnaryPrefix();
+                result = new UnaryIncrExpr(lineNum, innerPrefix, false);
+                break;
+            }
+            case UNARYDECR:
+            {
+                //pre-decrement
+                this.currentToken = this.scanner.scan();
+                Expr innerPrefix = this.parseUnaryPrefix();
+                result = new UnaryDecrExpr(lineNum, innerPrefix, false);
+                break;
+            }
+            default:
+                //no prefix (base case)
+                result = this.parseUnaryPostfix();
+                break;
         }
 
         return result;
@@ -990,11 +1046,12 @@ public class Parser
     private Expr parsePrimary()
     {
         int lineNum = this.currentToken.position;
+        Expr primary = null;
 
         if (this.currentToken.kind == LPAREN)
         {
             this.currentToken = this.scanner.scan();
-            Expr primary = parseExpression();
+            primary = parseExpression();
 
             //this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RPAREN)
@@ -1005,28 +1062,43 @@ public class Parser
         }
         else if (this.currentToken.kind == INTCONST)
         {
-            return parseIntConst();
+            primary = parseIntConst();
         }
         else if (this.currentToken.kind == BOOLEAN)
         {
-            return parseBoolean();
+            primary = parseBoolean();
         }
         else if (this.currentToken.kind == STRCONST)
         {
-            return parseStringConst();
+            primary = parseStringConst();
         }
         else if (this.currentToken.kind == IDENTIFIER)  // ugly
         {
+            primary = parsePrimary();
             // t1: this, super, primary, empty
             if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
             {
-
+                this.currentToken = this.scanner.scan();
+                if(this.currentToken.kind!=DOT)
+                    this.whinge("Expected a dot");
+                this.currentToken = this.scanner.scan();
+                String identifier = parseIdentifier();
+                if (this.currentToken.kind == LBRACKET)
+                {
+                    this.currentToken = this.scanner.scan();
+                    Expr expr = parseExpression();
+                    if (this.currentToken.kind!=RBRACKET)
+                        this.whinge("Expected closing bracket");
+                    this.currentToken = this.scanner.scan();
+                }
+                primary = new VarExpr(lineNum,)
             }
+            else if(this.currentToken.equals(primary))
         }
         else
             this.whinge("");
 
-        return null;
+        return primary;
     }
     /*
      * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
@@ -1048,7 +1120,9 @@ public class Parser
         int lineNum = this.currentToken.position;
         ExprList argList = new ExprList(lineNum);
 
-        //parse first argument, which is always present
+        if (this.currentToken.kind==RPAREN) return argList;
+
+        //parse first argument
         argList.addElement(this.parseExpression());
 
         //parse other arguments if present
@@ -1080,13 +1154,13 @@ public class Parser
         else
             this.whinge("Expected valid type name");
 
-        //this.currentToken = this.scanner.scan();
         if (this.currentToken.kind == LBRACKET)  // optional brackets
         {
             this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RBRACKET)
                 this.whinge("Expected closing bracket");
 
+            type += "[]";
             this.currentToken = this.scanner.scan();
         }
 
@@ -1096,8 +1170,6 @@ public class Parser
         }
         else
             this.whinge("Expected identifier or opening bracket");
-
-        //this.currentToken = this.scanner.scan();
 
         return new Formal(lineNum, type, name);
     }
@@ -1146,8 +1218,10 @@ public class Parser
     /**
      * helper method to check semicolon
      */
-    private void checkSemicolon(){
-        if (this.currentToken.kind != SEMICOLON) this.whinge("Expected semicolon");
+    private void checkSemicolon()
+    {
+        if (this.currentToken.kind != SEMICOLON)
+            this.whinge("Expected semicolon");
         this.currentToken = this.scanner.scan();
     }
 }
