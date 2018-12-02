@@ -562,7 +562,7 @@ public class Parser
             if (this.currentToken.kind != SEMICOLON)
             {
                 start = parseExpression();
-\            }
+            }
             else this.currentToken = this.scanner.scan();
 
             if (this.currentToken.kind != SEMICOLON)
