@@ -73,12 +73,13 @@ public class Parser
             }
             catch (CompilationException e)
             {
-                errorHandler.register(Error.Kind.LEX_ERROR, "Failed to read in source file");
+                errorHandler.register(Error.Kind.LEX_ERROR, "Failed to complete parsing");
             }
 
             //check for errors
             if (errorHandler.errorsFound())
             {
+                errorHandler.getErrorList().forEach(error -> System.out.println(error.toString()));
                 System.out.println(String.format("\n%d errors found", errorHandler.getErrorList().size()));
             }
             else
@@ -1167,6 +1168,7 @@ public class Parser
 			primary = new DispatchExpr(lineNum, primary, name, arguments);
         }
 
+        System.out.println("thinged");
         return primary;
     }
     /*
