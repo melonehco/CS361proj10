@@ -39,15 +39,15 @@ in each file, do not modify any of the files that I am giving you except the Par
 file. You are, of course, allowed to add additional methods to Parser.java and add
 additional files and classes, if appropriate, to make your design more elegant.
 
-•  Add a second button to the toolbar whose text is "Scan & parse". When it is clicked,
+[COMPLETED]•  Add a second button to the toolbar whose text is "Scan & parse". When it is clicked,
 a Scanner object and a Parser object should be built and the Parser.parse() method
 should be called to parse the contents of the selected tab.
 
-•  If the selected tab's current contents haven't been saved to a file, then before
+[COMPLETED]•  If the selected tab's current contents haven't been saved to a file, then before
 parsing and checking, your program should bring up a dialog, as was done in Project 9,
 asking the user if they want to save the tab's contents.
 
-•  If one or more errors occur--during either the scanning or the parsing--an error
+[COMPLETED]•  If one or more errors occur--during either the scanning or the parsing--an error
 message should appear in the console giving information on at least one of the errors that was found.
 
 •  If there are no errors during the parse, the parse() method should return an AST. That
