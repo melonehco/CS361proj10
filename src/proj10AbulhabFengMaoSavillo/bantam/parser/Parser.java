@@ -522,7 +522,7 @@ public class Parser
     private Stmt parseDeclStmt()
     {
         //TODO: how to check "every local variable must be initialized"?
-        int position = 0;
+        int lineNum = 0;
             this.currentToken = this.scanner.scan();
             if (this.currentToken.kind == IDENTIFIER)
             {
@@ -533,7 +533,7 @@ public class Parser
                     Expr expr = parseExpression();
                     if (this.currentToken.kind != SEMICOLON) this.whinge("Expected semicolon");
                     this.currentToken = this.scanner.scan();
-                    return new DeclStmt(position, identifier, expr);
+                    return new DeclStmt(lineNum, identifier, expr);
                 }
                 else whinge("Expected assignment sign");
             }
@@ -621,14 +621,14 @@ public class Parser
      */
     private Expr parseOrExpr()
     {
-        int position = currentToken.position;
+        int lineNum = currentToken.position;
 
         Expr left = parseAndExpr();
         while (this.currentToken.spelling.equals("||"))
         {
             this.currentToken = scanner.scan();
             Expr right = parseAndExpr();
-            left = new BinaryLogicOrExpr(position, left, right);
+            left = new BinaryLogicOrExpr(lineNum, left, right);
         }
 
         return left;
@@ -640,13 +640,13 @@ public class Parser
      */
     private Expr parseAndExpr()
     {
-        int position = currentToken.position;
+        int lineNum = currentToken.position;
         Expr left = parseEqualityExpr();
         while (this.currentToken.spelling.equals("&&"))
         {
             this.currentToken = this.scanner.scan();
             Expr right = parseEqualityExpr();
-            left = new BinaryLogicAndExpr(position, left, right);
+            left = new BinaryLogicAndExpr(lineNum, left, right);
         }
         return left;
 
@@ -659,7 +659,7 @@ public class Parser
      */
     private Expr parseEqualityExpr()
     {
-        int position = currentToken.position;
+        int lineNum = currentToken.position;
         Expr left = parseRelationalExpr();
         Expr right = null;
         this.currentToken = scanner.scan();
@@ -667,13 +667,13 @@ public class Parser
         {
             this.currentToken = this.scanner.scan();
             right = parseRelationalExpr();
-            return new BinaryCompEqExpr(position, left, right);
+            return new BinaryCompEqExpr(lineNum, left, right);
         }
         else if (this.currentToken.spelling == "!=")
         {
             this.currentToken = this.scanner.scan();
             right = parseRelationalExpr();
-            return new BinaryCompNeExpr(position, left, right);
+            return new BinaryCompNeExpr(lineNum, left, right);
         }
         else
         {
@@ -689,7 +689,7 @@ public class Parser
      */
     private Expr parseRelationalExpr()
     {
-        int position = currentToken.position;
+        int lineNum = currentToken.position;
         Expr left = parseRelationalExpr();
         Expr right = null;
         this.currentToken = scanner.scan();
@@ -698,19 +698,19 @@ public class Parser
             case "<":
                 this.currentToken = this.scanner.scan();
                 right = parseRelationalExpr();
-                return new BinaryCompLtExpr(position, left, right);
+                return new BinaryCompLtExpr(lineNum, left, right);
             case ">":
                 this.currentToken = this.scanner.scan();
                 right = parseRelationalExpr();
-                return new BinaryCompGtExpr(position, left, right);
+                return new BinaryCompGtExpr(lineNum, left, right);
             case "<=":
                 this.currentToken = this.scanner.scan();
                 right = parseRelationalExpr();
-                return new BinaryCompLeqExpr(position, left, right);
+                return new BinaryCompLeqExpr(lineNum, left, right);
             case ">=":
                 this.currentToken = this.scanner.scan();
                 right = parseRelationalExpr();
-                return new BinaryCompGeqExpr(position, left, right);
+                return new BinaryCompGeqExpr(lineNum, left, right);
         }
 
         return null;
@@ -725,16 +725,16 @@ public class Parser
     private Expr parseAddExpr()
     {
         //TODO
-        int position = currentToken.position;
+        int lineNum = currentToken.position;
         Expr left = parseMultExpr();
         while (this.currentToken.kind == PLUSMINUS)
         {
             this.currentToken = this.scanner.scan();
             Expr right = parseMultExpr();
             if (this.currentToken.spelling == "+")
-                left = new BinaryArithPlusExpr(position, left, right);
+                left = new BinaryArithPlusExpr(lineNum, left, right);
             else if (this.currentToken.spelling == "-")
-                left = new BinaryArithMinusExpr(position, left, right);
+                left = new BinaryArithMinusExpr(lineNum, left, right);
         }
         return left;
     }
@@ -748,7 +748,7 @@ public class Parser
      */
     private Expr parseMultExpr()
     {
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr result = this.parseNewCastOrUnary();
 
         //build rest of MultiExpr while there are more operands
@@ -760,21 +760,21 @@ public class Parser
                 //multiply
                 this.currentToken = this.scanner.scan();
                 right = this.parseNewCastOrUnary();
-                result = new BinaryArithTimesExpr(position, result, right);
+                result = new BinaryArithTimesExpr(lineNum, result, right);
             }
             else if (this.currentToken.spelling.equals("/"))
             {
                 //divide
                 this.currentToken = this.scanner.scan();
                 right = this.parseNewCastOrUnary();
-                result = new BinaryArithDivideExpr(position, result, right);
+                result = new BinaryArithDivideExpr(lineNum, result, right);
             }
             else
             {
                 //modulo
                 this.currentToken = this.scanner.scan();
                 right = this.parseNewCastOrUnary();
-                result = new BinaryArithModulusExpr(position, result, right);
+                result = new BinaryArithModulusExpr(lineNum, result, right);
             }
         }
 
@@ -806,7 +806,7 @@ public class Parser
      */
     private Expr parseNew()
     {
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr result = null;
 
         this.currentToken = this.scanner.scan(); //move past NEW
@@ -815,7 +815,7 @@ public class Parser
         //handle new object
         if (this.currentToken.kind == LPAREN)
         {
-            result = new NewExpr(position, type);
+            result = new NewExpr(lineNum, type);
 
             //check for closing parenthesis
             this.currentToken = this.scanner.scan();
@@ -834,7 +834,7 @@ public class Parser
             this.currentToken = this.scanner.scan();
             Expr size = this.parseExpression();
 
-            result = new NewArrayExpr(position, type, size);
+            result = new NewArrayExpr(lineNum, type, size);
 
             //check for closing bracket
             if (this.currentToken.kind != RBRACKET)
@@ -859,7 +859,7 @@ public class Parser
      */
     private Expr parseCast()
     {
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr result = null;
 
         scanner.scan();
@@ -881,7 +881,7 @@ public class Parser
 
             this.currentToken = this.scanner.scan();
             Expr castedExpr = this.parseExpression();
-            result = new CastExpr(position, type, castedExpr);
+            result = new CastExpr(lineNum, type, castedExpr);
 
             //check for closing parenthesis
             if (this.currentToken.kind != RPAREN)
@@ -899,7 +899,7 @@ public class Parser
      */
     private Expr parseUnaryPrefix()
     {
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr result = null;
 
         if (this.currentToken.kind == PLUSMINUS)
@@ -915,7 +915,7 @@ public class Parser
             {
                 this.currentToken = this.scanner.scan();
                 Expr innerPrefix = this.parseUnaryPrefix();
-                result = new UnaryNegExpr(position, innerPrefix);
+                result = new UnaryNegExpr(lineNum, innerPrefix);
             }
         }
         else if (this.currentToken.kind == UNARYNOT)
@@ -923,21 +923,21 @@ public class Parser
             //unary not
             this.currentToken = this.scanner.scan();
             Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryNotExpr(position, innerPrefix);
+            result = new UnaryNotExpr(lineNum, innerPrefix);
         }
         else if (this.currentToken.kind == UNARYINCR)
         {
             //pre-increment
             this.currentToken = this.scanner.scan();
             Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryIncrExpr(position, innerPrefix, false);
+            result = new UnaryIncrExpr(lineNum, innerPrefix, false);
         }
         else if (this.currentToken.kind == UNARYDECR)
         {
             //pre-decrement
             this.currentToken = this.scanner.scan();
             Expr innerPrefix = this.parseUnaryPrefix();
-            result = new UnaryDecrExpr(position, innerPrefix, false);
+            result = new UnaryDecrExpr(lineNum, innerPrefix, false);
         }
         else
         {
@@ -954,7 +954,7 @@ public class Parser
      */
     private Expr parseUnaryPostfix()
     {
-        int position = this.currentToken.position;
+        int lineNum = this.currentToken.position;
         Expr result = null;
 
         Expr primary = this.parsePrimary();
@@ -962,12 +962,12 @@ public class Parser
         if (this.currentToken.kind == UNARYINCR)
         {
             //post-increment
-            result = new UnaryIncrExpr(position, primary, true);
+            result = new UnaryIncrExpr(lineNum, primary, true);
         }
         else if (this.currentToken.kind == UNARYDECR)
         {
             //post-decrement
-            result = new UnaryDecrExpr(position, primary, true);
+            result = new UnaryDecrExpr(lineNum, primary, true);
         }
         else
         {
@@ -1045,8 +1045,8 @@ public class Parser
      */
     private ExprList parseArguments()
     {
-        int position = this.currentToken.position;
-        ExprList argList = new ExprList(position);
+        int lineNum = this.currentToken.position;
+        ExprList argList = new ExprList(lineNum);
 
         //parse first argument, which is always present
         argList.addElement(this.parseExpression());
