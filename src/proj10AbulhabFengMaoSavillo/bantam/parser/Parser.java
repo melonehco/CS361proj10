@@ -414,10 +414,14 @@ public class Parser
 
     private String parseIdentifier()
     {
-        if (currentToken.kind != IDENTIFIER)
+        if (this.currentToken.kind != IDENTIFIER)
             this.whinge("Expected identifier");
 
-        return currentToken.getSpelling();
+        String identifier = this.currentToken.getSpelling();
+
+        this.currentToken = this.scanner.scan();
+
+        return identifier;
     }
 
     /* Statements

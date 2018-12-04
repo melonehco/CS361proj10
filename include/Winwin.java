@@ -1,6 +1,4 @@
-class Winwin {
-    String foo(int bar)
-    {
-        return "this";
-    }
+class Winwin
+{
+
 }
