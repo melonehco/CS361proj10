@@ -195,22 +195,6 @@ public class Parser
         return new Class_(initialPosition, className, className, parent, memberList);
     }
 
-    /**
-     * Parsing Error occurred!
-     *
-     * @param errorMessage
-     * @throws CompilationException
-     */
-    private void whinge(String errorMessage)
-            throws CompilationException
-    {
-        this.errorHandler.register(Error.Kind.PARSE_ERROR,
-                                   this.filename,
-                                   this.currentToken.position,
-                                   errorMessage);
-        throw new CompilationException(String.format("Compilation Exception: %s", errorMessage));
-    }
-
     /* Fields and Methods
      * <Member> ::= <Field> | <Method>
      * <Method> ::= <Type> <Identifier> ( <Parameters> ) <Block>
@@ -293,24 +277,24 @@ public class Parser
         int lineNum = this.currentToken.position;
         BlockStmt blockStmt = null;
 
-        if (this.currentToken.kind == LCURLY)
-        {
-            this.currentToken = this.scanner.scan();
-
-            StmtList stmtList = new StmtList(lineNum);
-            while (this.currentToken.kind != RCURLY)
-            {
-                if (this.currentToken.kind == EOF)
-                    this.whinge("Expected closing brace");
-
-                advancePastCommentary();
-                Stmt stmt = parseStatement();
-                stmtList.addElement(stmt);
-            }
-            blockStmt = new BlockStmt(lineNum, stmtList);
-        }
-        else
+        if (this.currentToken.kind != LCURLY)
             this.whinge("Expected opening brace");
+
+        this.currentToken = this.scanner.scan();
+
+        StmtList stmtList = new StmtList(lineNum);
+        while (this.currentToken.kind != RCURLY)
+        {
+            if (this.currentToken.kind == EOF)
+                this.whinge("Expected closing brace");
+
+            advancePastCommentary();
+            Stmt stmt = parseStatement();
+            stmtList.addElement(stmt);
+        }
+        blockStmt = new BlockStmt(lineNum, stmtList);
+
+        this.currentToken = this.scanner.scan();
 
         return blockStmt;
     }
@@ -331,13 +315,12 @@ public class Parser
             if (!(expr instanceof VarExpr))
                 this.whinge("Expected var expression");
 
-            String name = ((VarExpr)(expr)).getName();
-
+            String name = ((VarExpr) (expr)).getName();
 
             Expr assignedExpr = parseExpression();
 
             //if ref is given, get its name
-            Expr ref = ((VarExpr)(expr)).getRef();
+            Expr ref = ((VarExpr) (expr)).getRef();
             String refName = null;
             if (ref != null)
             {
@@ -345,7 +328,7 @@ public class Parser
                 if (!(ref instanceof VarExpr))
                     this.whinge("Expected var expression");
 
-                refName = ((VarExpr)ref).getName();
+                refName = ((VarExpr) ref).getName();
             }
 
             this.currentToken = this.scanner.scan(); //move past ASSIGN
@@ -364,7 +347,6 @@ public class Parser
     {
         int lineNum = this.currentToken.position;
         FormalList formalList = new FormalList(lineNum);
-
 
         if (this.currentToken.kind == RPAREN) return formalList;
 
@@ -921,7 +903,6 @@ public class Parser
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis in cast expression.");
 
-
         this.currentToken = this.scanner.scan();
         String type = this.parseType();
 
@@ -1045,9 +1026,9 @@ public class Parser
     {
         int lineNum = this.currentToken.position;
         Expr primary = null;
-        
+
         //parse the starting primary
-        
+
         if (this.currentToken.kind == LPAREN)
         {
             this.currentToken = this.scanner.scan();
@@ -1073,99 +1054,100 @@ public class Parser
         else if (this.currentToken.kind == IDENTIFIER)  // ugly
         {
             //check for possible VarExprPrefix
-        	if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
+            if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
             {
                 //store ref
-        		VarExpr ref = new VarExpr(lineNum, null, this.currentToken.spelling);
-        		this.currentToken = this.scanner.scan();
-                
-        		//check for dot
-        		if(this.currentToken.kind!=DOT)
+                VarExpr ref = new VarExpr(lineNum, null, this.currentToken.spelling);
+                this.currentToken = this.scanner.scan();
+
+                //check for dot
+                if (this.currentToken.kind != DOT)
                     this.whinge("Expected a dot");
                 this.currentToken = this.scanner.scan();
-                
+
                 String name = parseIdentifier();
-                
+
                 //brackets indicate array expression
                 if (this.currentToken.kind == LBRACKET)
                 {
                     this.currentToken = this.scanner.scan();
                     Expr indexExpr = parseExpression();
-                    
+
                     if (this.currentToken.kind != RBRACKET)
                         this.whinge("Expected closing bracket");
                     this.currentToken = this.scanner.scan();
-                    
+
                     primary = new ArrayExpr(lineNum, ref, name, indexExpr);
                 }
                 //otherwise handle general variable expression
                 else
                 {
-                	primary = new VarExpr(lineNum, ref, name);
+                    primary = new VarExpr(lineNum, ref, name);
                 }
             }
             //otherwise could be VarExpr or DispatchExpr
-        	else
-        	{
-        		String name = parseIdentifier();
-        		
-        		if (this.currentToken.kind == LBRACKET)
-        		{
-        			/* TODO: this is identical to the previous array expr case
-        			 * besides the ref
-        			 */
-        			//array expression
+            else
+            {
+                String name = parseIdentifier();
+
+                if (this.currentToken.kind == LBRACKET)
+                {
+                    /* TODO: this is identical to the previous array expr case
+                     * besides the ref
+                     */
+                    //array expression
                     this.currentToken = this.scanner.scan();
                     Expr indexExpr = parseExpression();
-                    
+
                     if (this.currentToken.kind != RBRACKET)
                         this.whinge("Expected closing bracket");
                     this.currentToken = this.scanner.scan();
-        			primary = new ArrayExpr(lineNum, null, name, indexExpr);
-        		}
-        		else if (this.currentToken.kind == LPAREN)
-        		{
-        			//dispatch expression
-        			ExprList arguments = this.parseArguments();
-                    
+                    primary = new ArrayExpr(lineNum, null, name, indexExpr);
+                }
+                else if (this.currentToken.kind == LPAREN)
+                {
+                    //dispatch expression
+                    ExprList arguments = this.parseArguments();
+
                     if (this.currentToken.kind != RPAREN)
                         this.whinge("Expected closing parenthesis");
                     this.currentToken = this.scanner.scan();
-                    
-        			primary = new DispatchExpr(lineNum, null, name, arguments);
-        		}
-        		else
-        		{
-        			//var expression
-        			primary = new VarExpr(lineNum, null, name);
-        		}
-        	}
+
+                    primary = new DispatchExpr(lineNum, null, name, arguments);
+                }
+                else
+                {
+                    //var expression
+                    primary = new VarExpr(lineNum, null, name);
+                }
+            }
         }
         else
             this.whinge("Expected primary");
-        
+
         //while there is more to this primary
         //TODO: I think that after this point only dispatch expressions are possible
         while (this.currentToken.kind == DOT)
         {
             this.currentToken = this.scanner.scan(); //move past DOT
-        	lineNum = this.currentToken.position;
-        	String name = parseIdentifier();
-        	
-        	//check for opening parenthesis
-        	if (this.currentToken.kind != LPAREN)
-	    		this.whinge("Expected opening parenthesis in dispatch expression");
+            lineNum = this.currentToken.position;
+            String name = parseIdentifier();
 
-			ExprList arguments = this.parseArguments();
-            
+            //check for opening parenthesis
+            if (this.currentToken.kind != LPAREN)
+                this.whinge("Expected opening parenthesis in dispatch expression");
+
+            ExprList arguments = this.parseArguments();
+
             if (this.currentToken.kind != RPAREN)
                 this.whinge("Expected closing parenthesis");
             this.currentToken = this.scanner.scan();
-            
-			primary = new DispatchExpr(lineNum, primary, name, arguments);
+
+            primary = new DispatchExpr(lineNum, primary, name, arguments);
         }
 
-        //System.out.println("thinged");
+        System.out.println("thinged");
+
         return primary;
     }
     /*
@@ -1188,7 +1170,7 @@ public class Parser
         int lineNum = this.currentToken.position;
         ExprList argList = new ExprList(lineNum);
 
-        if (this.currentToken.kind==RPAREN) return argList;
+        if (this.currentToken.kind == RPAREN) return argList;
 
         //parse first argument
         argList.addElement(this.parseExpression());
@@ -1238,6 +1220,8 @@ public class Parser
         }
         else
             this.whinge("Expected identifier or opening bracket");
+
+        System.out.println("thinged2");
 
         return new Formal(lineNum, type, name);
     }
@@ -1291,6 +1275,22 @@ public class Parser
         if (this.currentToken.kind != SEMICOLON)
             this.whinge("Expected semicolon");
         this.currentToken = this.scanner.scan();
+    }
+
+    /**
+     * Parsing Error occurred!
+     *
+     * @param errorMessage
+     * @throws CompilationException
+     */
+    private void whinge(String errorMessage)
+            throws CompilationException
+    {
+        this.errorHandler.register(Error.Kind.PARSE_ERROR,
+                                   this.filename,
+                                   this.currentToken.position,
+                                   errorMessage);
+        throw new CompilationException(String.format("Compilation Exception: %s", errorMessage));
     }
 }
 
