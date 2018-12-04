@@ -311,29 +311,52 @@ public class Parser
         // if optional assignment present
         if (this.currentToken.kind == ASSIGN)
         {
-            //make sure left-hand side of assignment is a var
-            if (!(expr instanceof VarExpr))
-                this.whinge("Expected var expression");
-
-            String name = ((VarExpr) (expr)).getName();
-
-
-            //if ref is given, get its name
-            Expr ref = ((VarExpr) (expr)).getRef();
-            String refName = null;
-            if (ref != null)
+            //left-hand side of assignment must be a var or array expr
+        	if (expr instanceof VarExpr)
             {
-                //make sure ref is a VarExpr
-                if (!(ref instanceof VarExpr))
-                    this.whinge("Expected var expression");
+        		String name = ((VarExpr) (expr)).getName();
+        		Expr ref = ((VarExpr) (expr)).getRef();
+        		
+        		//if ref is given, get its name
+                String refName = null;
+                if (ref != null)
+                {
+                    //make sure ref is a VarExpr
+                    if (!(ref instanceof VarExpr))
+                        this.whinge("Expected var expression");
 
-                refName = ((VarExpr) ref).getName();
+                    refName = ((VarExpr) ref).getName();
+                }
+
+                this.currentToken = this.scanner.scan(); //move past ASSIGN
+                Expr assignedExpr = parseExpression();
+
+                expr = new AssignExpr(lineNum, refName, name, assignedExpr);
             }
+            else if (expr instanceof ArrayExpr)
+            {
+            	String name = ((ArrayExpr) (expr)).getName();
+            	Expr ref = ((ArrayExpr) (expr)).getRef();
+            	Expr indexExpr = ((ArrayExpr) (expr)).getIndex();
+        		
+        		//if ref is given, get its name
+                String refName = null;
+                if (ref != null)
+                {
+                    //make sure ref is a VarExpr
+                    if (!(ref instanceof VarExpr))
+                        this.whinge("Expected var expression");
 
-            this.currentToken = this.scanner.scan(); //move past ASSIGN
-            Expr assignedExpr = parseExpression();
+                    refName = ((VarExpr) ref).getName();
+                }
 
-            expr = new AssignExpr(lineNum, refName, name, assignedExpr);
+                this.currentToken = this.scanner.scan(); //move past ASSIGN
+                Expr assignedExpr = parseExpression();
+
+                expr = new ArrayAssignExpr(lineNum, refName, name, indexExpr, assignedExpr);
+            }
+            else
+                this.whinge("Expected var or array expression to assign to");
         }
 
         return expr;

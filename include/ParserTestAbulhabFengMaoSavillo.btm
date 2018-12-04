@@ -51,7 +51,7 @@ class Dale extends Professor
 
 class Bruce extends Professor
 {
-	int numAlpacas = 15; //unsure of these numbers
+	int numAlpacas = 15;
 	int numLlamas = 1;
 	int numBurros = 2;
 	int numTurkeys = 1;
@@ -133,3 +133,4 @@ class Zadia extends Professor
 //unary prefixes: multiple, -, ++, --
 //postfixes: ++, --, none
 //dispatch expr: w/ and w/o chain of dispatches, w/ and w/o args
+//add a dangly thing
