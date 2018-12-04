@@ -317,7 +317,6 @@ public class Parser
 
             String name = ((VarExpr) (expr)).getName();
 
-            Expr assignedExpr = parseExpression();
 
             //if ref is given, get its name
             Expr ref = ((VarExpr) (expr)).getRef();
@@ -332,6 +331,7 @@ public class Parser
             }
 
             this.currentToken = this.scanner.scan(); //move past ASSIGN
+            Expr assignedExpr = parseExpression();
 
             expr = new AssignExpr(lineNum, refName, name, assignedExpr);
         }
@@ -532,6 +532,7 @@ public class Parser
 
             if (this.currentToken.kind == ASSIGN)
             {
+                this.currentToken = this.scanner.scan();
                 Expr expr = parseExpression();
                 this.checkSemicolon();
 
@@ -585,9 +586,10 @@ public class Parser
         {
             increment = parseExpression();
 
-            this.currentToken = this.scanner.scan();
             if (this.currentToken.kind != RPAREN)
                 this.whinge("Expected closing parenthesis");
+            else
+                this.currentToken = this.scanner.scan();
         }
         else
             this.currentToken = this.scanner.scan();
@@ -996,11 +998,13 @@ public class Parser
 
         if (this.currentToken.kind == UNARYINCR)
         {
+            this.currentToken = this.scanner.scan();
             //post-increment
             result = new UnaryIncrExpr(lineNum, primary, true);
         }
         else if (this.currentToken.kind == UNARYDECR)
         {
+            this.currentToken = this.scanner.scan();
             //post-decrement
             result = new UnaryDecrExpr(lineNum, primary, true);
         }
@@ -1024,6 +1028,9 @@ public class Parser
      */
     private Expr parsePrimary()
     {
+        if (this.currentToken.position == 15)
+            System.out.println("breakpoint");
+
         int lineNum = this.currentToken.position;
         Expr primary = null;
 
@@ -1051,7 +1058,7 @@ public class Parser
         {
             primary = parseStringConst();
         }
-        else if (this.currentToken.kind == IDENTIFIER)  // ugly
+        else if (this.currentToken.kind == IDENTIFIER)
         {
             //check for possible VarExprPrefix
             if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
@@ -1136,6 +1143,8 @@ public class Parser
             //check for opening parenthesis
             if (this.currentToken.kind != LPAREN)
                 this.whinge("Expected opening parenthesis in dispatch expression");
+
+            this.currentToken = this.scanner.scan();
 
             ExprList arguments = this.parseArguments();
 
