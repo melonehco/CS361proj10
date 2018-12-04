@@ -190,13 +190,6 @@ public class Parser
             }
 
             this.currentToken = this.scanner.scan();
-
-            Class_ class_ = new Class_(initialPosition, this.filename, className, parent, memberList);
-            System.out.println(class_.getFilename());
-            System.out.println(class_.getName());
-            System.out.println(class_.getParent());
-            System.out.println(class_.getMemberList());
-
         }
 
         return new Class_(initialPosition, className, className, parent, memberList);
@@ -705,7 +698,7 @@ public class Parser
         Expr right = null;
         Expr expr = null;
 
-        this.currentToken = scanner.scan();
+        //this.currentToken = scanner.scan();
         if (this.currentToken.spelling.equals("=="))
         {
             this.currentToken = this.scanner.scan();
@@ -737,7 +730,7 @@ public class Parser
         Expr right = null;
         Expr expr = null;
 
-        this.currentToken = this.scanner.scan();
+        //this.currentToken = this.scanner.scan();
         switch (this.currentToken.spelling)
         {
             case "<":
@@ -1172,7 +1165,7 @@ public class Parser
 			primary = new DispatchExpr(lineNum, primary, name, arguments);
         }
 
-        System.out.println("thinged");
+        //System.out.println("thinged");
         return primary;
     }
     /*

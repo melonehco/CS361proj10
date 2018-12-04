@@ -1,9 +1,9 @@
 class Winwin
 {
-    int main(String[] args)
-    {
-        int lorem = 6009;
+    int lorem = 6009;
+    String ipsum = "dolor sit amet";
 
-        return lorem;
+    void main(String[] args)
+    {
     }
 }
