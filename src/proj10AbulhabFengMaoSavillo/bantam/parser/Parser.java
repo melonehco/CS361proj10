@@ -1028,9 +1028,6 @@ public class Parser
      */
     private Expr parsePrimary()
     {
-        if (this.currentToken.position == 15)
-            System.out.println("breakpoint");
-
         int lineNum = this.currentToken.position;
         Expr primary = null;
 
@@ -1155,8 +1152,6 @@ public class Parser
             primary = new DispatchExpr(lineNum, primary, name, arguments);
         }
 
-        System.out.println("thinged");
-
         return primary;
     }
     /*
@@ -1229,8 +1224,6 @@ public class Parser
         }
         else
             this.whinge("Expected identifier or opening bracket");
-
-        System.out.println("thinged2");
 
         return new Formal(lineNum, type, name);
     }
