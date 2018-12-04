@@ -1050,7 +1050,7 @@ public class Parser
         Expr primary = null;
         
         //parse the starting primary
-        
+
         if (this.currentToken.kind == LPAREN)
         {
             this.currentToken = this.scanner.scan();

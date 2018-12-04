@@ -1,0 +1,135 @@
+/*
+ * File: ParserTestAbulhabFengMaoSavillo.btm
+ * F18 CS361 Project 10
+ * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
+ * Date: 12/7/2018
+ * Test file for parser with all Bantam syntax rules
+ * We are aware that it would make more sense for individual professors
+ * to be instances of the Professor class instead of subclasses, but
+ * this setup seemed more amusing.
+ */
+
+class Professor
+{
+	String[] classes;
+	
+	String getClass(int i)
+	{
+		return this.classes[i];
+	}
+}
+
+class Dale extends Professor
+{
+	void shiverWithJoy()
+	{
+		{
+		
+		}
+		
+		return;
+	}
+	
+	int shudderWithRevulsion()
+	{
+		return 42 + 42 - 42;
+	}
+	
+	String refactor(String oldCode)
+	{
+		var elegant = false;
+		var newCode = "";
+		
+		while (!elegant)
+		{
+			newCode = oldCode + "improvements";
+		}
+		
+		return newCode;
+	}
+}
+
+class Bruce extends Professor
+{
+	int numAlpacas = 15; //unsure of these numbers
+	int numLlamas = 1;
+	int numBurros = 2;
+	int numTurkeys = 1;
+	
+	String[] fixSegFaults()
+	{
+		var solutions = new String[numLlamas + numTurkeys];
+		var i = 0;
+		
+		super.classes = new String[5];
+		
+		for (i = 0; i < 7; i++)
+		{
+			super.classes[i] = "more CS";
+			solutions[i] = "stack overflow";
+		}
+		
+		for (; i < 14; i++)
+		{
+		}
+		
+		for (i = 0;; i++)
+		{
+			if (i < 7)
+				break;
+		}
+		
+		for (i = 0; i < 7;)
+		{
+			i++;
+		}
+		
+		return solutions;
+	}
+	
+	String shear()
+	{
+		var tooCold = false;
+		if (this.numAlpacas == 15 && !tooCold)
+		{
+			this.numTurkeys = this.numTurkeys * 3 / 2  + (this.numBurros % 1);
+			return "snip snip";
+		}
+		else
+		{
+			return "wait wait";
+		}
+	}
+	
+	Professor hire()
+	{
+		return new Professor();
+	}
+}
+
+class Stephanie extends Professor
+{
+	String sendProjectFeedback(String studentName, int grade)
+	{
+		return "Well done!";
+	}
+}
+
+class Ying extends Professor
+{
+	boolean onSabbatical = true;
+}
+
+class Zadia extends Professor
+{
+	
+}
+
+
+//check to make sure we have:
+//stmts: expression statement
+//many possible cases for expr...
+//cast
+//unary prefixes: none, multiple, -, !, ++, --
+//postfixes: ++, --, none
+//dispatch expr: w/ and w/o chain of dispatches, w/ and w/o args
