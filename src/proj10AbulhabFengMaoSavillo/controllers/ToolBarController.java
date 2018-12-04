@@ -113,66 +113,43 @@ public class ToolBarController
         }
         else
         {
-            this.engage(event, file);
-        }
-
-    }
-
-    //TODO better name
-    public void engage(Event event, File file)
-    {
-        boolean shouldGenerateFile = false; // TODO Better names
-        boolean shouldDrawAST = false;
-        Button clickedButton = (Button) event.getTarget();
-        switch (clickedButton.getId())
-        {
-            case "scanButton":
-                shouldGenerateFile = true;
-                break;
-            case "scanAndParseButton":
-                shouldDrawAST = true;
-                break;
-            default:
-                System.out.println("How did this happen? Toolbar engage");
-                break;
-        }
-
-        // This may or may not solve a hard-to-replicate bug.
-        if (this.thread != null)
-        {
-            if (this.thread.isAlive())
+            // This may or may not solve a hard-to-replicate bug.
+            if (this.thread != null)
             {
-                try
+                if (this.thread.isAlive())
                 {
-                    this.thread.join(5000);
-                }
-                catch (Exception e)
-                {
-                    System.out.println("threading headaches1");
-                }
-                finally
-                {
-                    if (!this.thread.isInterrupted())
-                        this.thread.interrupt();
-                    this.thread = null;
+                    try
+                    {
+                        this.thread.join(5000);
+                    }
+                    catch (Exception e)
+                    {
+                        System.out.println("threading headaches1");
+                    }
+                    finally
+                    {
+                        if (!this.thread.isInterrupted())
+                            this.thread.interrupt();
+                        this.thread = null;
+                    }
                 }
             }
+
+            // Clear the console before printing
+            Platform.runLater(() ->
+                              {
+                                  this.console.clear();
+                                  consoleLength = 0;
+                              });
+
+            this.generateFile(file.getAbsolutePath());
         }
-
-        // Clear the console before printing
-        Platform.runLater(() ->
-                          {
-                              this.console.clear();
-                              consoleLength = 0;
-                          });
-
-        this.scanFile(file, shouldGenerateFile, shouldDrawAST);
 
     }
 
-    public void scanFile(File file, boolean shouldGenerateFile, boolean shouldDrawAST)
+    public void generateFile(String filename)
     {
-        String filename = file.getAbsolutePath();
+        JavaCodeArea outputArea = requestAreaForOutput();
 
         Task task = new Task()
         {
@@ -183,62 +160,32 @@ public class ToolBarController
                 Scanner scanner = new Scanner(filename, errorHandler);
 
                 // Request that the filemenucontroller create a new tab in which to print
-                if (shouldGenerateFile)
+
+                // Scan the file and retrieve each token
+                Token currentToken = scanner.scan();
+                while (currentToken.kind != Token.Kind.EOF)
                 {
-                    JavaCodeArea outputArea = requestAreaForOutput();
-
-                    // Scan the file and retrieve each token
-                    Token currentToken = scanner.scan();
-                    while (currentToken.kind != Token.Kind.EOF)
-                    {
-                        String s = currentToken.toString();
-                        Platform.runLater(() -> outputArea.appendText(s + "\n"));
-                        currentToken = scanner.scan();
-                    }
-
-                    outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
+                    String s = currentToken.toString();
+                    Platform.runLater(() -> outputArea.appendText(s + "\n"));
+                    currentToken = scanner.scan();
                 }
 
+                outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
 
-                if (shouldDrawAST)
+                List<Error> errorList = errorHandler.getErrorList();
+                int errorCount = errorList.size();
+                if (errorCount == 0)
                 {
-                    Parser parser = new Parser(errorHandler);
-                    Program ast = parser.parse(filename);
-
-                    List<Error> errorList = errorHandler.getErrorList();
-                    int errorCount = errorList.size();
-                    if (errorCount == 0)
-                    {
-                        Platform.runLater(() -> console.appendText("No errors detected\n"));
-                        Platform.runLater(() -> new Drawer().draw(file.getName(), ast));
-                    }
-                    else
-                    {
-                        errorList.forEach((error) ->
-                                          {
-                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                          });
-                        String msg = String.format("Found %d error(s)\n", errorCount);
-                        Platform.runLater(() -> console.appendText(msg));
-                    }
+                    Platform.runLater(() -> console.appendText("No errors detected\n"));
                 }
-                else //TODO clean here
+                else
                 {
-                    List<Error> errorList = errorHandler.getErrorList();
-                    int errorCount = errorList.size();
-                    if (errorCount == 0)
-                    {
-                        Platform.runLater(() -> console.appendText("No errors detected\n"));
-                    }
-                    else
-                    {
-                        errorList.forEach((error) ->
-                                          {
-                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                          });
-                        String msg = String.format("Found %d error(s)\n", errorCount);
-                        Platform.runLater(() -> console.appendText(msg));
-                    }
+                    errorList.forEach((error) ->
+                                      {
+                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                      });
+                    String msg = String.format("Found %d error(s)\n", errorCount);
+                    Platform.runLater(() -> console.appendText(msg));
                 }
 
                 return null;
@@ -272,7 +219,85 @@ public class ToolBarController
         }
         else
         {
-            this.engage(event, file);
+            // This may or may not solve a hard-to-replicate bug.
+            if (this.thread != null)
+            {
+                if (this.thread.isAlive())
+                {
+                    try
+                    {
+                        this.thread.join(5000);
+                    }
+                    catch (Exception e)
+                    {
+                        System.out.println("threading headaches1");
+                    }
+                    finally
+                    {
+                        if (!this.thread.isInterrupted())
+                            this.thread.interrupt();
+                        this.thread = null;
+                    }
+                }
+            }
+
+            // Clear the console before printing
+            Platform.runLater(() ->
+                              {
+                                  this.console.clear();
+                                  consoleLength = 0;
+                              });
+
+            this.drawTree(file.getAbsolutePath());
         }
+    }
+
+    public void drawTree(String filename)
+    {
+        Task task = new Task()
+        {
+            @Override
+            protected Object call() throws Exception
+            {
+                ErrorHandler errorHandler = new ErrorHandler();
+                Scanner scanner = new Scanner(filename, errorHandler);
+
+                // Request that the filemenucontroller create a new tab in which to print
+
+                // Scan the file and retrieve each token
+                Token currentToken = scanner.scan();
+                while (currentToken.kind != Token.Kind.EOF)
+                {
+                    currentToken = scanner.scan();
+                }
+
+                Parser parser = new Parser(errorHandler);
+                Program ast = parser.parse(filename);
+
+                List<Error> errorList = errorHandler.getErrorList();
+                int errorCount = errorList.size();
+                if (errorCount == 0)
+                {
+                    String[] splitfilename = filename.split("/");
+                    Platform.runLater(() -> console.appendText("No errors detected\n"));
+                    Platform.runLater(() -> new Drawer().draw(splitfilename[splitfilename.length-1], ast));
+                }
+                else
+                {
+                    errorList.forEach((error) ->
+                                      {
+                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                      });
+                    String msg = String.format("Found %d error(s)\n", errorCount);
+                    Platform.runLater(() -> console.appendText(msg));
+                }
+
+                return null;
+            }
+        };
+
+        this.thread = new Thread(task);
+        this.thread.setDaemon(true);
+        this.thread.start();
     }
 }
