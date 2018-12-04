@@ -130,6 +130,6 @@ class Zadia extends Professor
 //stmts: expression statement
 //many possible cases for expr...
 //cast
-//unary prefixes: none, multiple, -, !, ++, --
+//unary prefixes: multiple, -, ++, --
 //postfixes: ++, --, none
 //dispatch expr: w/ and w/o chain of dispatches, w/ and w/o args
