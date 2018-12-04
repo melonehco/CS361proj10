@@ -278,7 +278,7 @@ public class ToolBarController
                 {
                     ast = parser.parse(filename);
                 }
-                catch (CompilationException e) { }
+                catch (CompilationException e) {}
                 finally
                 {
                     List<Error> errorList = errorHandler.getErrorList();
