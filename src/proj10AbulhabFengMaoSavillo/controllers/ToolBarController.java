@@ -16,6 +16,7 @@ import proj10AbulhabFengMaoSavillo.JavaCodeArea;
 import proj10AbulhabFengMaoSavillo.bantam.ast.Program;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Scanner;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Token;
+import proj10AbulhabFengMaoSavillo.bantam.util.CompilationException;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error;
 import proj10AbulhabFengMaoSavillo.bantam.util.ErrorHandler;
 import proj10AbulhabFengMaoSavillo.bantam.parser.Parser;
@@ -120,7 +121,7 @@ public class ToolBarController
                 {
                     try
                     {
-                        this.thread.join(5000);
+                        this.thread.join(3000);
                     }
                     catch (Exception e)
                     {
@@ -226,7 +227,7 @@ public class ToolBarController
                 {
                     try
                     {
-                        this.thread.join(5000);
+                        this.thread.join(3000);
                     }
                     catch (Exception e)
                     {
@@ -272,24 +273,31 @@ public class ToolBarController
                 }
 
                 Parser parser = new Parser(errorHandler);
-                Program ast = parser.parse(filename);
-
-                List<Error> errorList = errorHandler.getErrorList();
-                int errorCount = errorList.size();
-                if (errorCount == 0)
+                Program ast = null;
+                try
                 {
-                    String[] splitfilename = filename.split("/");
-                    Platform.runLater(() -> console.appendText("No errors detected\n"));
-                    Platform.runLater(() -> new Drawer().draw(splitfilename[splitfilename.length-1], ast));
+                    ast = parser.parse(filename);
                 }
-                else
+                catch (CompilationException e) { }
+                finally
                 {
-                    errorList.forEach((error) ->
-                                      {
-                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                      });
-                    String msg = String.format("Found %d error(s)\n", errorCount);
-                    Platform.runLater(() -> console.appendText(msg));
+                    List<Error> errorList = errorHandler.getErrorList();
+                    int errorCount = errorList.size();
+                    if (errorCount == 0)
+                    {
+                        String[] splitfilename = filename.split("/");
+                        Platform.runLater(() -> console.appendText("No errors detected\n"));
+                        new Drawer().draw(splitfilename[splitfilename.length - 1], ast);
+                    }
+                    else
+                    {
+                        errorList.forEach((error) ->
+                                          {
+                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                          });
+                        String msg = String.format("Found %d error(s)\n", errorCount);
+                        Platform.runLater(() -> console.appendText(msg));
+                    }
                 }
 
                 return null;
