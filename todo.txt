@@ -73,5 +73,4 @@ and parsing were successful for that file.
 •  In completeLongerToken should we have more error-checking? (Scanner)
 •  Bug: WinWin expects semicolon on 16 instead of 14
 •  QuickBug: one error parsing becomes two errors/error to read file
-•  When did our structureview stop working?
 •  Drawer needs to be run better. — when application closed drawer still is running
