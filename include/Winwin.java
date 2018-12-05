@@ -4,6 +4,12 @@
  */
 class Winwin
 {
+    void main(String[] args)
+    {
+        var winner = new Winwin();
+
+        return winner.findTruth(parameter);
+    }
     boolean findTruth(String[] everything)
     {
         var theTruth = true;
