@@ -7,6 +7,7 @@ Date: 11/20/2018
 
 package proj10AbulhabFengMaoSavillo.controllers;
 
+import com.sun.tools.javac.jvm.Code;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.control.TreeItem;
@@ -109,9 +110,21 @@ public class StructureViewController
         TreeItem<String> newRoot = new TreeItem<>(fileContents);
         this.setRootNode(newRoot);
 
-        this.structureViewWorker.setFileContents(fileContents);
-        this.structureViewWorker.setTreeItemLineNumMap(this.treeItemLineNumMap);
-        this.structureViewWorker.setNewRoot(newRoot);
+        Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
+        lexer.removeErrorListeners();
+
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        Java8Parser parser = new Java8Parser(tokens);
+        parser.removeErrorListeners();
+
+        ParseTree tree = parser.compilationUnit();
+
+        //walk through parse tree with listening for code structure elements
+        CodeStructureListener codeStructureListener = new CodeStructureListener(newRoot, treeItemLineNumMap);
+
+        this.structureViewWorker.setCodeStructureListener(codeStructureListener);
+        this.structureViewWorker.setTree(tree);
 
         this.structureViewWorker.reset();
         this.structureViewWorker.restart();
@@ -139,24 +152,18 @@ public class StructureViewController
 
     protected class StructureViewWorker extends Service
     {
-        private String fileContents;
         private ParseTreeWalker walker;
-        private Map<TreeItem, Integer> treeItemLineNumMap;
-        private TreeItem<String> newRoot;
+        private ParseTree tree;
+        private CodeStructureListener codeStructureListener;
 
-        public void setFileContents(String fileContents)
+        public void setTree(ParseTree tree)
         {
-            this.fileContents = fileContents;
+            this.tree = tree;
         }
 
-        public void setTreeItemLineNumMap(Map<TreeItem, Integer> treeItemLineNumMap)
+        public void setCodeStructureListener(CodeStructureListener codeStructureListener)
         {
-            this.treeItemLineNumMap = treeItemLineNumMap;
-        }
-
-        public void setNewRoot(TreeItem<String> newRoot)
-        {
-            this.newRoot = newRoot;
+            this.codeStructureListener = codeStructureListener;
         }
 
         StructureViewWorker(final ParseTreeWalker walker)
@@ -167,26 +174,12 @@ public class StructureViewController
         @Override
         protected Task createTask()
         {
-            Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
-            lexer.removeErrorListeners();
-
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-            Java8Parser parser = new Java8Parser(tokens);
-            parser.removeErrorListeners();
-
-            ParseTree tree = parser.compilationUnit();
-
-            //walk through parse tree with listening for code structure elements
-            CodeStructureListener codeStructureListener = new CodeStructureListener(newRoot, treeItemLineNumMap);
-
             return new Task()
             {
                 @Override
                 protected Object call() throws Exception
                 {
                     walker.walk(codeStructureListener, tree);
-
                     return null;
                 }
             };
