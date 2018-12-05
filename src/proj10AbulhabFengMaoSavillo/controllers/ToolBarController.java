@@ -257,11 +257,7 @@ public class ToolBarController
                     }
                     catch (CompilationException e)
                     {
-                        errorHandler.register(Error.Kind.LEX_ERROR, "Failed to read in source file");
-                    }
-                    catch (Exception e)
-                    {
-                        System.out.println("Some other error: " + e.getMessage());
+                        errorHandler.register(Error.Kind.LEX_ERROR, "Compilation Error:\n" + e.getMessage());
                     }
 
                     // Detect any errors
@@ -275,11 +271,15 @@ public class ToolBarController
                     else
                     {
                         isErrorFree = false;
+                        final int[] parseErrorCount = {0};
                         errorList.forEach((error) ->
                                           {
                                               results.append(error.toString()).append("\n");
+
+                                              if (error.getKind() == Error.Kind.PARSE_ERROR)
+                                                  parseErrorCount[0]++;
                                           });
-                        results.append(String.format("Found %d error(s)\n", errorCount));
+                        results.append(String.format("Found %d (parse) error(s)\n", parseErrorCount[0]));
                     }
 
                     return results.toString();
@@ -358,7 +358,7 @@ public class ToolBarController
                     }
                     catch (CompilationException e)
                     {
-                        errorHandler.register(Error.Kind.LEX_ERROR, "Compilation Error");
+                        errorHandler.register(Error.Kind.LEX_ERROR, "Compilation Error:\n" + e.getMessage());
                     }
 
                     // Detect any errors
