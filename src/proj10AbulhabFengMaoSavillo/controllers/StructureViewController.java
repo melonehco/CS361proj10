@@ -9,6 +9,7 @@ package proj10AbulhabFengMaoSavillo.controllers;
 
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
@@ -43,7 +44,6 @@ public class StructureViewController
     private Thread thread;
     private StructureViewWorker structureViewWorker;
 
-
     /**
      * Constructor for this class
      */
@@ -51,16 +51,35 @@ public class StructureViewController
     {
         this.walker = new ParseTreeWalker();
         this.treeItemLineNumMap = new HashMap<>();
-        this.structureViewWorker = new StructureViewWorker(this.walker);
+        this.structureViewWorker = new StructureViewWorker();
 
         this.structureViewWorker.setOnSucceeded(event ->
                                                 {
-                                                    ((StructureViewWorker) event.getSource()).resetFields();
+                                                    System.out.println("Succeeded\n");
+
+                                                    ParseTree tree =
+                                                            ((StructureViewWorker) event.getSource()).getValue();
+
+                                                    //walk through parse tree with listening for code structure elements
+                                                    CodeStructureListener codeStructureListener =
+                                                            new CodeStructureListener(this.treeView.getRoot(),
+                                                                                      treeItemLineNumMap);
+
+                                                    this.walker.walk(codeStructureListener, tree);
+                                                    //((StructureViewWorker) event.getSource()).resetFields();
                                                 });
+
         this.structureViewWorker.setOnCancelled(event ->
                                                 {
+                                                    System.out.println("Cancelled");
                                                     ((StructureViewWorker) event.getSource()).resetFields();
                                                 });
+
+        this.structureViewWorker.setOnReady(event -> System.out.println("Ready"));
+        this.structureViewWorker.setOnRunning(event -> System.out.println("Running"));
+        this.structureViewWorker.setOnScheduled(event -> System.out.println("Scheduled"));
+        this.structureViewWorker.setOnFailed(event -> System.out.println("Failed"));
+
     }
 
     /**
@@ -112,15 +131,12 @@ public class StructureViewController
      */
     public void generateStructureTree(String fileContents)
     {
-
         this.structureViewWorker.cancel();
 
         TreeItem<String> newRoot = new TreeItem<>(fileContents);
         this.setRootNode(newRoot);
 
-        this.structureViewWorker.setNewRoot(newRoot);
         this.structureViewWorker.setFileContents(fileContents);
-        this.structureViewWorker.setTreeItemLineNumMap(this.treeItemLineNumMap);
 
         this.structureViewWorker.reset();
         this.structureViewWorker.restart();
@@ -146,67 +162,44 @@ public class StructureViewController
         this.setRootNode(null);
     }
 
-    protected class StructureViewWorker extends Service
+    protected class StructureViewWorker extends Service<ParseTree>
     {
-        private ParseTreeWalker walker;
         private String fileContents;
-        private TreeItem<String> newRoot;
-        private Map<TreeItem, Integer> treeItemLineNumMap;
-
-        StructureViewWorker(final ParseTreeWalker walker)
-        {
-            this.walker = walker;
-        }
 
         public void setFileContents(String fileContents)
         {
             this.fileContents = fileContents;
         }
 
-        public void setNewRoot(TreeItem<String> newRoot)
-        {
-            this.newRoot = newRoot;
-        }
-
-        public void setTreeItemLineNumMap(Map<TreeItem, Integer> treeItemLineNumMap)
-        {
-            this.treeItemLineNumMap = treeItemLineNumMap;
-        }
-
         public void resetFields()
         {
             this.fileContents = null;
-            this.newRoot = null;
-            this.treeItemLineNumMap = null;
         }
 
         @Override
-        protected Task createTask()
+        protected Task<ParseTree> createTask()
         {
-            Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
-            lexer.removeErrorListeners();
-
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-            Java8Parser parser = new Java8Parser(tokens);
-            parser.removeErrorListeners();
-
-            ParseTree tree = parser.compilationUnit();
-
-            //walk through parse tree with listening for code structure elements
-            CodeStructureListener codeStructureListener = new CodeStructureListener(newRoot, treeItemLineNumMap);
-
-            return new Task()
+            return new Task<ParseTree>()
             {
                 @Override
-                protected Object call() throws Exception
+                protected ParseTree call() throws Exception
                 {
-                    walker.walk(codeStructureListener, tree);
-                    return null;
+                    Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
+                    lexer.removeErrorListeners();
+
+                    CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+                    Java8Parser parser = new Java8Parser(tokens);
+                    parser.removeErrorListeners();
+
+                    ParseTree tree = parser.compilationUnit();
+
+                    return tree;
                 }
             };
         }
     }
+
 
     /**
      * Private helper class that listens for code structure declarations
