@@ -9,7 +9,8 @@
 package proj10AbulhabFengMaoSavillo.controllers;
 
 import javafx.application.Platform;
-import javafx.scene.control.Button;
+import javafx.beans.property.BooleanProperty;
+import javafx.concurrent.Service;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import javafx.event.Event;
 import proj10AbulhabFengMaoSavillo.JavaCodeArea;
@@ -23,7 +24,6 @@ import proj10AbulhabFengMaoSavillo.bantam.parser.Parser;
 import proj10AbulhabFengMaoSavillo.bantam.treedrawer.Drawer;
 
 import java.util.List;
-import java.util.concurrent.*;
 import java.io.*;
 
 import javafx.concurrent.Task;
@@ -40,43 +40,74 @@ import javafx.concurrent.Task;
 public class ToolBarController
 {
     /**
-     * Console defined in Main.fxml
-     */
-    private StyleClassedTextArea console;
-    /**
-     * Process currently compiling or running a Java file
-     */
-    private Process currentProcess;
-    /**
-     * Thread representing the Java program input stream
-     */
-    private Thread inThread;
-    /**
-     * Thread representing the Java program output stream
-     */
-    private Thread outThread;
-    /**
-     * Mutex lock to control input and output threads' access to console
-     */
-    private Semaphore mutex;
-    /**
-     * The consoleLength of the output on the console
-     */
-    private int consoleLength;
-    /**
      * The FileMenuController
      */
     private FileMenuController fileMenuController;
+    /**
+     * Console defined in Main.fxml
+     */
+    private StyleClassedTextArea console;
+    private ScanWorker scanWorker;
+    private ParseWorker parseWorker;
+    private Drawer drawer;
 
-    private Thread thread;
+    private BooleanProperty running;
+
 
     /**
      * Initializes the ToolBarController controller.
-     * Sets the Semaphore, the CompileWorker and the CompileRunWorker.
+     * Sets the Drawer, and the Scan- and Parse-Workers.
+     * Also sets OnStatus behavior of workers.
      */
     public void initialize()
     {
-        this.mutex = new Semaphore(1);
+        this.drawer = new Drawer();
+
+        // setup scan worker
+        this.scanWorker = new ScanWorker();
+        this.scanWorker.setOnSucceeded(event ->
+                                       {
+                                           ((ScanWorker) event.getSource()).resetFields();
+
+                                           // Clear the console before printing
+                                           console.clear();
+                                           console.appendText((String) (event.getSource().getValue()));
+                                       });
+        this.scanWorker.setOnCancelled(event ->
+                                       {
+                                           ((ScanWorker) event.getSource()).resetFields();
+
+                                           //((ScanWorker)event.getSource()) remove tab?
+                                           console.appendText("\nTask Cancelled\n");
+                                       }
+        );
+
+        //setup parse worker
+        this.parseWorker = new ParseWorker();
+        this.parseWorker.setOnSucceeded(event ->
+                                        {
+                                            if (((ParseWorker) event.getSource()).isErrorFree)
+                                            {
+                                                String filename = ((ParseWorker) event.getSource()).filename;
+                                                Program ast = ((ParseWorker) event.getSource()).root;
+
+                                                String[] splitFilename = filename.split("/");
+                                                this.drawer.draw(splitFilename[splitFilename.length - 1], ast);
+                                            }
+
+                                            ((ParseWorker) event.getSource()).resetFields();
+
+                                            // Clear the console before printing
+                                            console.clear();
+                                            console.appendText((String) (event.getSource().getValue()));
+                                        });
+        this.parseWorker.setOnCancelled(event ->
+                                        {
+                                            ((ParseWorker) event.getSource()).resetFields();
+
+                                            console.appendText("\nTask Cancelled\n");
+                                        }
+        );
     }
 
     /**
@@ -100,6 +131,37 @@ public class ToolBarController
     }
 
     /**
+     * First ensures the user agrees to save file, then parses the current file.
+     *
+     * @param event the event triggered
+     * @param file  the current file
+     */
+    public void handleScanAndParseButtonAction(Event event, File file)
+    {
+        // user selects cancel button
+        if (this.fileMenuController.checkSaveBeforeCompile() == 2)
+        {
+            event.consume();
+        }
+        else
+        {
+            if (this.parseWorker.isRunning())
+            {
+                this.parseWorker.cancel();
+            }
+
+            ErrorHandler errorHandler = new ErrorHandler();
+            String filename = file.getAbsolutePath();
+
+            this.parseWorker.setErrorHandler(errorHandler);
+            this.parseWorker.setFilename(filename);
+
+            this.parseWorker.reset();
+            this.parseWorker.restart();
+        }
+    }
+
+    /**
      * Handles when the scan button is clicked; the current file is run through a lexical scanner.
      *
      * @param event the event triggered
@@ -107,99 +169,35 @@ public class ToolBarController
      */
     public void handleScanButtonAction(Event event, File file)
     {
-        // user select cancel button
+        // user selects cancel button
         if (this.fileMenuController.checkSaveBeforeCompile() == 2)
         {
             event.consume();
         }
         else
         {
-            // This may or may not solve a hard-to-replicate bug.
-            if (this.thread != null)
+            if (this.scanWorker.isRunning())
             {
-                if (this.thread.isAlive())
-                {
-                    try
-                    {
-                        this.thread.join(3000);
-                    }
-                    catch (Exception e)
-                    {
-                        System.out.println("threading headaches1");
-                    }
-                    finally
-                    {
-                        if (!this.thread.isInterrupted())
-                            this.thread.interrupt();
-                        this.thread = null;
-                    }
-                }
+                this.scanWorker.cancel();
             }
 
-            // Clear the console before printing
-            Platform.runLater(() ->
-                              {
-                                  this.console.clear();
-                                  consoleLength = 0;
-                              });
+            ErrorHandler errorHandler = new ErrorHandler();
+            String filename = file.getAbsolutePath();
+            // Request that the filemenucontroller create a new tab in which to print
+            JavaCodeArea outputArea = requestAreaForOutput();
 
-            this.generateFile(file.getAbsolutePath());
+            this.scanWorker.setErrorHandler(errorHandler);
+            this.scanWorker.setFilename(filename);
+            this.scanWorker.setOutputArea(outputArea);
+
+            this.scanWorker.reset();
+            this.scanWorker.restart();
         }
 
     }
 
-    public void generateFile(String filename)
-    {
-        JavaCodeArea outputArea = requestAreaForOutput();
-
-        Task task = new Task()
-        {
-            @Override
-            protected Object call() throws Exception
-            {
-                ErrorHandler errorHandler = new ErrorHandler();
-                Scanner scanner = new Scanner(filename, errorHandler);
-
-                // Request that the filemenucontroller create a new tab in which to print
-
-                // Scan the file and retrieve each token
-                Token currentToken = scanner.scan();
-                while (currentToken.kind != Token.Kind.EOF)
-                {
-                    String s = currentToken.toString();
-                    Platform.runLater(() -> outputArea.appendText(s + "\n"));
-                    currentToken = scanner.scan();
-                }
-
-                outputArea.setEditable(true);  // set the codeArea to editable after we're done writing to it
-
-                List<Error> errorList = errorHandler.getErrorList();
-                int errorCount = errorList.size();
-                if (errorCount == 0)
-                {
-                    Platform.runLater(() -> console.appendText("No errors detected\n"));
-                }
-                else
-                {
-                    errorList.forEach((error) ->
-                                      {
-                                          Platform.runLater(() -> console.appendText(error.toString() + "\n"));
-                                      });
-                    String msg = String.format("Found %d error(s)\n", errorCount);
-                    Platform.runLater(() -> console.appendText(msg));
-                }
-
-                return null;
-            }
-        };
-
-        this.thread = new Thread(task);
-        this.thread.setDaemon(true);
-        this.thread.start();
-    }
-
     /**
-     * Request a new tab be made
+     * Helper method, Request a new tab be made
      *
      * @return the code area in the newly made tab
      */
@@ -208,104 +206,175 @@ public class ToolBarController
         return this.fileMenuController.giveNewCodeArea();
     }
 
+
     /**
-     * TODO doc
+     * Parse Worker which manages the Task of creating a Parser, parsing a scanned file,
+     * and reporting results
      */
-    public void handleScanAndParseButtonAction(Event event, File file)
+    protected static class ParseWorker extends Service<String>
     {
-        // user select cancel button
-        if (this.fileMenuController.checkSaveBeforeCompile() == 2)
+        public boolean isErrorFree; // whether or not there were no errors parsing, so a tree will be drawn
+        private ErrorHandler errorHandler;
+        private String filename;
+        private Parser parser;
+        private Program root;
+
+        public void resetFields()
         {
-            event.consume();
+            this.errorHandler = null;
+            this.filename = null;
+            this.parser = null;
+            this.root = null;
+            this.isErrorFree = false;
         }
-        else
+
+        public void setFilename(String filename)
         {
-            // This may or may not solve a hard-to-replicate bug.
-            if (this.thread != null)
+            this.filename = filename;
+        }
+
+        public void setErrorHandler(ErrorHandler errorHandler)
+        {
+            this.errorHandler = errorHandler;
+        }
+
+        @Override
+        protected Task<String> createTask()
+        {
+            this.parser = new Parser(this.errorHandler);
+
+            return new Task<String>()
             {
-                if (this.thread.isAlive())
+                @Override
+                protected String call() throws Exception
                 {
+                    StringBuilder results = new StringBuilder();
+
                     try
                     {
-                        this.thread.join(3000);
+                        root = parser.parse(filename);
                     }
-                    catch (Exception e)
+                    catch (CompilationException e)
                     {
-                        System.out.println("threading headaches1");
+                        errorHandler.register(Error.Kind.LEX_ERROR, "Failed to read in source file");
                     }
-                    finally
-                    {
-                        if (!this.thread.isInterrupted())
-                            this.thread.interrupt();
-                        this.thread = null;
-                    }
-                }
-            }
 
-            // Clear the console before printing
-            Platform.runLater(() ->
-                              {
-                                  this.console.clear();
-                                  consoleLength = 0;
-                              });
-
-            this.drawTree(file.getAbsolutePath());
-        }
-    }
-
-    public void drawTree(String filename)
-    {
-        Task task = new Task()
-        {
-            @Override
-            protected Object call() throws Exception
-            {
-                ErrorHandler errorHandler = new ErrorHandler();
-                Scanner scanner = new Scanner(filename, errorHandler);
-
-                // Request that the filemenucontroller create a new tab in which to print
-
-                // Scan the file and retrieve each token
-                Token currentToken = scanner.scan();
-                while (currentToken.kind != Token.Kind.EOF)
-                {
-                    currentToken = scanner.scan();
-                }
-
-                Parser parser = new Parser(errorHandler);
-                Program ast = null;
-                try
-                {
-                    ast = parser.parse(filename);
-                }
-                catch (CompilationException e) {}
-                finally
-                {
+                    // Detect any errors
                     List<Error> errorList = errorHandler.getErrorList();
                     int errorCount = errorList.size();
                     if (errorCount == 0)
                     {
-                        String[] splitfilename = filename.split("/");
-                        Platform.runLater(() -> console.appendText("No errors detected\n"));
-                        new Drawer().draw(splitfilename[splitfilename.length - 1], ast);
+                        isErrorFree = true;
+                        results.append("No errors detected\n");
+                    }
+                    else
+                    {
+                        isErrorFree = false;
+                        errorList.forEach((error) ->
+                                          {
+                                              results.append(error.toString()).append("\n");
+                                          });
+                        results.append(String.format("Found %d error(s)\n", errorCount));
+                    }
+
+                    return results.toString();
+                }
+            };
+        }
+    }
+
+
+    /**
+     * Scan Worker which manages the Task of creating a Scanner, scanning through a file,
+     * and reporting results
+     */
+    protected static class ScanWorker extends Service<String>
+    {
+        private ErrorHandler errorHandler;
+        private String filename;
+        private Scanner scanner;
+        private JavaCodeArea outputArea;
+
+        public void setFilename(String filename)
+        {
+            this.filename = filename;
+        }
+
+        public void resetFields()
+        {
+            this.errorHandler = null;
+            this.filename = null;
+            this.scanner = null;
+            this.outputArea = null;
+        }
+
+        public void setErrorHandler(ErrorHandler errorHandler)
+        {
+            this.errorHandler = errorHandler;
+        }
+
+        public void setOutputArea(JavaCodeArea outputArea)
+        {
+            this.outputArea = outputArea;
+        }
+
+        @Override
+        protected Task<String> createTask()
+        {
+            this.scanner = new Scanner(filename, errorHandler);
+
+            this.outputArea.setEditable(false); //user no touch until we're done
+
+            return new Task<String>()
+            {
+                @Override
+                protected String call()
+                {
+                    StringBuilder results = new StringBuilder();
+
+                    try
+                    {
+                        // Scan the file and retrieve each token
+                        Token currentToken = scanner.scan();
+                        while (currentToken.kind != Token.Kind.EOF)
+                        {
+                        /*
+                            output area will be null if this was called from ParseWorker,
+                            i.e. the Scan n Parse button was pressed
+                         */
+                            if (outputArea != null)
+                            {
+                                String s = currentToken.toString();
+                                Platform.runLater(() -> outputArea.appendText(s + "\n"));
+                            }
+
+                            currentToken = scanner.scan();
+                        }
+                    }
+                    catch (CompilationException e)
+                    {
+                        errorHandler.register(Error.Kind.LEX_ERROR, "Compilation Error");
+                    }
+
+                    // Detect any errors
+                    List<Error> errorList = errorHandler.getErrorList();
+                    int errorCount = errorList.size();
+                    if (errorCount == 0)
+                    {
+                        results.append("No errors detected\n");
                     }
                     else
                     {
                         errorList.forEach((error) ->
                                           {
-                                              Platform.runLater(() -> console.appendText(error.toString() + "\n"));
+                                              results.append(error.toString()).append("\n");
                                           });
-                        String msg = String.format("Found %d error(s)\n", errorCount);
-                        Platform.runLater(() -> console.appendText(msg));
+                        results.append(String.format("Found %d error(s)\n", errorCount));
                     }
+
+                    return results.toString();
                 }
-
-                return null;
-            }
-        };
-
-        this.thread = new Thread(task);
-        this.thread.setDaemon(true);
-        this.thread.start();
+            };
+        }
     }
 }
