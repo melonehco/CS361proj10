@@ -13,7 +13,7 @@ for handling operators.
 
 [COMPLETED]•  Your scanner doesn’t accept “\”” as a legal string token.
 
-•  Your use of a buffer in the scan() method is not the most elegant way to implement the method. You can
+[COMPLETED]•  Your use of a buffer in the scan() method is not the most elegant way to implement the method. You can
 get rid of the buffer if you just fix the scan method so that it has the following invariant: The value of
 this.currentChar at the end of the scan() method is always the first character of the rest of the source file
 (that is, that part of the source file after the previous Token was returned). So make sure that, before
@@ -50,14 +50,14 @@ asking the user if they want to save the tab's contents.
 [COMPLETED]•  If one or more errors occur--during either the scanning or the parsing--an error
 message should appear in the console giving information on at least one of the errors that was found.
 
-•  If there are no errors during the parse, the parse() method should return an AST. That
+[COMPLETED]•  If there are no errors during the parse, the parse() method should return an AST. That
 AST should then be drawn in a new separate window, using the treedrawer package. Also,
 a message should be written to the console saying that scanning and parsing was completed successfully.
 
-•  Note that the treedrawer package draws a window using the Java Swing framework instead of
+[COMPLETED]•  Note that the treedrawer package draws a window using the Java Swing framework instead of
 the JavaFX framework. To draw an AST, you need only create a Drawer object and call its draw() method.
 
-•  Note also that the new tab displaying all the tokens that the preceding project created
+[COMPLETED]•  Note also that the new tab displaying all the tokens that the preceding project created
 should not be created by the Scan & parse button.
 
 •  For testing purposes, I would like you to create a file named "ParserTest<your-last-names>.btm" that
@@ -70,6 +70,8 @@ the file and either the error messages when the file was scanned and parsed or a
 and parsing were successful for that file.
 
 -_INTERNAL_-
-•  Possibility of using visitors to handle errors?
-    - don't like this idea anymore.
-•  You can stick comments in more places than I thought
+•  In completeLongerToken should we have more error-checking? (Scanner)
+•  Bug: WinWin expects semicolon on 16 instead of 14
+•  QuickBug: one error parsing becomes two errors/error to read file
+•  When did our structureview stop working?
+•  Drawer needs to be run better. — when application closed drawer still is running

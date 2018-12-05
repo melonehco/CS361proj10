@@ -1,7 +1,6 @@
 /*
     int lorem = 6009;
     String ipsum = "dolor sit amet";
-
  */
 class Winwin
 {
@@ -12,7 +11,7 @@ class Winwin
         var i = 0;
         for(; i < 2; i++)
         {
-            theTruth = theTruth && everything[i]
+            theTruth = theTruth && everything[i];
         }
 
         return theTruth;
