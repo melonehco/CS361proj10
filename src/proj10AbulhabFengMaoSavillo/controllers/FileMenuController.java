@@ -166,14 +166,12 @@ public class FileMenuController
     /**
      * Returns a newly created code area for use.
      *
-     * @return
+     * @return new JavaCodeArea to meet request for one
      */
     public JavaCodeArea giveNewCodeArea()
     {
         this.handleNewAction();
-        JavaCodeArea newCodeArea = this.javaTabPane.getCurrentCodeArea();
-        newCodeArea.setEditable(false);
-        return newCodeArea;
+        return this.javaTabPane.getCurrentCodeArea();
     }
 
     /**
@@ -184,7 +182,6 @@ public class FileMenuController
     private void removeTab(JavaTab tab)
     {
         this.javaTabPane.removeTab(tab);
-
     }
 
     /**

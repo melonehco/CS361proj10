@@ -7,8 +7,7 @@ Date: 11/20/2018
 
 package proj10AbulhabFengMaoSavillo.controllers;
 
-import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
+import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -42,6 +41,7 @@ public class StructureViewController
     private Map<TreeItem, Integer> treeItemLineNumMap;
     private TreeView<String> treeView;
     private Thread thread;
+    private StructureViewWorker structureViewWorker;
 
 
     /**
@@ -51,6 +51,7 @@ public class StructureViewController
     {
         this.walker = new ParseTreeWalker();
         this.treeItemLineNumMap = new HashMap<>();
+        this.structureViewWorker = new StructureViewWorker(this.walker);
     }
 
     /**
@@ -102,58 +103,30 @@ public class StructureViewController
      */
     public void generateStructureTree(String fileContents)
     {
+        if (this.structureViewWorker.isRunning())
+            this.structureViewWorker.cancel();
+
         TreeItem<String> newRoot = new TreeItem<>(fileContents);
         this.setRootNode(newRoot);
 
-        // This may or may not solve a hard-to-replicate bug.
-        if (this.thread != null)
-        {
-            if (this.thread.isAlive())
-            {
-                try
-                {
-                    this.thread.join(5000);
-                }
-                catch (Exception e)
-                {
-                    System.out.println("threading headaches1");
-                }
-                finally
-                {
-                    if (!this.thread.isInterrupted())
-                        this.thread.interrupt();
-                    this.thread = null;
-                }
-            }
-        }
+        Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
+        lexer.removeErrorListeners();
 
-        Task task = new Task()
-        {
-            @Override
-            protected Object call() throws Exception
-            {
-                Java8Lexer lexer = new Java8Lexer(CharStreams.fromString(fileContents));
-                lexer.removeErrorListeners();
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
+        Java8Parser parser = new Java8Parser(tokens);
+        parser.removeErrorListeners();
 
-                Java8Parser parser = new Java8Parser(tokens);
-                parser.removeErrorListeners();
+        ParseTree tree = parser.compilationUnit();
 
-                ParseTree tree = parser.compilationUnit();
+        //walk through parse tree with listening for code structure elements
+        CodeStructureListener codeStructureListener = new CodeStructureListener(newRoot, treeItemLineNumMap);
 
-                //walk through parse tree with listening for code structure elements
-                CodeStructureListener codeStructureListener = new CodeStructureListener(newRoot, treeItemLineNumMap);
+        this.structureViewWorker.setCodeStructureListener(codeStructureListener);
+        this.structureViewWorker.setTree(tree);
 
-                walker.walk(codeStructureListener, tree);
-
-                return null;
-            }
-        };
-
-        this.thread = new Thread(task);
-        this.thread.setDaemon(true);
-        this.thread.start();
+        this.structureViewWorker.reset();
+        this.structureViewWorker.restart();
     }
 
 
@@ -174,6 +147,42 @@ public class StructureViewController
     public void resetRootNode()
     {
         this.setRootNode(null);
+    }
+
+    protected class StructureViewWorker extends Service
+    {
+        private ParseTreeWalker walker;
+        private ParseTree tree;
+        private CodeStructureListener codeStructureListener;
+
+        public void setTree(ParseTree tree)
+        {
+            this.tree = tree;
+        }
+
+        public void setCodeStructureListener(CodeStructureListener codeStructureListener)
+        {
+            this.codeStructureListener = codeStructureListener;
+        }
+
+        StructureViewWorker(final ParseTreeWalker walker)
+        {
+            this.walker = walker;
+        }
+
+        @Override
+        protected Task createTask()
+        {
+            return new Task()
+            {
+                @Override
+                protected Object call() throws Exception
+                {
+                    walker.walk(codeStructureListener, tree);
+                    return null;
+                }
+            };
+        }
     }
 
     /**
@@ -200,7 +209,7 @@ public class StructureViewController
             this.currentNode = root;
             this.treeItemIntegerMap = treeItemIntegerMap;
 
-            String path = "/proj9AbulhabFengMaoSavillo/resources/icons/";
+            String path = "/proj10AbulhabFengMaoSavillo/resources/icons/";
             try
             {
                 this.classPic = new Image(new FileInputStream(
