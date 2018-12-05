@@ -73,9 +73,9 @@ class Bruce extends Professor
 		{
 		}
 		
-		for (i = 0;; i++)
+		for (i = 0;; i--)
 		{
-			if (i < 7)
+			if (i < -7)
 				break;
 		}
 		
@@ -131,6 +131,5 @@ class Zadia extends Professor
 //many possible cases for expr...
 //cast
 //unary prefixes: multiple, -, ++, --
-//postfixes: ++, --, none
 //dispatch expr: w/ and w/o chain of dispatches, w/ and w/o args
 //add a dangly thing
