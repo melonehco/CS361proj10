@@ -228,21 +228,23 @@ public class FileMenuController
      * @return 0 if user clicked NO button; 1 if user clicked OK button;
      * 2 is user clicked Cancel button; -1 is no saving is needed
      */
-    public int checkSaveBeforeCompile()
+    public int checkSaveBeforeScan()
     {
 
         // if the file has not been saved or has been changed
         if (this.tabNeedsSaving(this.javaTabPane.getCurrentTab(), true))
         {
             int buttonClicked = createConfirmationDialog("Save Changes?",
-                                                         "Do you want to save the changes before compiling?",
-                                                         "Your recent file changes would not be compiled if not saved.");
+                                                         "Do you want to save the changes before scanning?",
+                                                         "Your recent file changes would not be scanned if not saved.");
             // if user presses Yes button
             if (buttonClicked == 1)
             {
-                this.handleSaveAction();
+                if(this.handleSaveAction())return 1;
+                else return 2;
             }
-            return buttonClicked;
+            else return 2;
+
         }
         return -1;
     }
@@ -471,6 +473,7 @@ public class FileMenuController
 
             // map the tab and the associated file
             selectedTab.setFile(saveFile);
+            System.out.println(selectedTab.getFile().getAbsolutePath());
 
             // call this for some reason
             this.directoryViewController.createDirectoryTree();

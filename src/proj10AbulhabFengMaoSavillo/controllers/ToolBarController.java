@@ -14,6 +14,7 @@ import javafx.concurrent.Service;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import javafx.event.Event;
 import proj10AbulhabFengMaoSavillo.JavaCodeArea;
+import proj10AbulhabFengMaoSavillo.JavaTab;
 import proj10AbulhabFengMaoSavillo.bantam.ast.Program;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Scanner;
 import proj10AbulhabFengMaoSavillo.bantam.lexer.Token;
@@ -134,12 +135,12 @@ public class ToolBarController
      * First ensures the user agrees to save file, then parses the current file.
      *
      * @param event the event triggered
-     * @param file  the current file
+     * @param tab  the current tab
      */
-    public void handleScanAndParseButtonAction(Event event, File file)
+    public void handleScanAndParseButtonAction(Event event, JavaTab tab)
     {
         // user selects cancel button
-        if (this.fileMenuController.checkSaveBeforeCompile() == 2)
+        if (this.fileMenuController.checkSaveBeforeScan() == 2)
         {
             event.consume();
         }
@@ -151,7 +152,7 @@ public class ToolBarController
             }
 
             ErrorHandler errorHandler = new ErrorHandler();
-            String filename = file.getAbsolutePath();
+            String filename = tab.getFile().getAbsolutePath();
 
             this.parseWorker.setErrorHandler(errorHandler);
             this.parseWorker.setFilename(filename);
@@ -165,12 +166,12 @@ public class ToolBarController
      * Handles when the scan button is clicked; the current file is run through a lexical scanner.
      *
      * @param event the event triggered
-     * @param file  the current file
+     * @param tab  the current tab
      */
-    public void handleScanButtonAction(Event event, File file)
+    public void handleScanButtonAction(Event event, JavaTab tab)
     {
         // user selects cancel button
-        if (this.fileMenuController.checkSaveBeforeCompile() == 2)
+        if (this.fileMenuController.checkSaveBeforeScan() == 2)
         {
             event.consume();
         }
@@ -182,7 +183,7 @@ public class ToolBarController
             }
 
             ErrorHandler errorHandler = new ErrorHandler();
-            String filename = file.getAbsolutePath();
+            String filename = tab.getFile().getAbsolutePath();
             // Request that the filemenucontroller create a new tab in which to print
             JavaCodeArea outputArea = requestAreaForOutput();
 

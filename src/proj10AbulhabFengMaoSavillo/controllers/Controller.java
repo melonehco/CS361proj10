@@ -344,7 +344,7 @@ public class Controller
     @FXML
     private void handleScanButtonAction(Event event)
     {
-        this.toolbarController.handleScanButtonAction(event, this.javaTabPane.getCurrentFile());
+        this.toolbarController.handleScanButtonAction(event, this.javaTabPane.getCurrentTab());
     }
 
     /**
@@ -353,7 +353,7 @@ public class Controller
     @FXML
     private void handleScanAndParseButtonAction(Event event)
     {
-        this.toolbarController.handleScanAndParseButtonAction(event, this.javaTabPane.getCurrentFile());
+        this.toolbarController.handleScanAndParseButtonAction(event, this.javaTabPane.getCurrentTab());
     }
 
     /**
