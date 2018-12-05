@@ -259,6 +259,10 @@ public class ToolBarController
                     {
                         errorHandler.register(Error.Kind.LEX_ERROR, "Failed to read in source file");
                     }
+                    catch (Exception e)
+                    {
+                        System.out.println("Some other error: " + e.getMessage());
+                    }
 
                     // Detect any errors
                     List<Error> errorList = errorHandler.getErrorList();
