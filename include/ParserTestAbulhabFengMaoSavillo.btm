@@ -8,7 +8,7 @@
  * to be instances of the Professor class instead of subclasses, but
  * this setup seemed more amusing.
  */
-
+/*
 class Professor
 {
 	String[] classes;
@@ -106,15 +106,25 @@ class Bruce extends Professor
 		return new Professor();
 	}
 }
-
+*/
 class Stephanie extends Professor
 {
 	String sendProjectFeedback(String studentName, int grade)
 	{
+		if (studentName.contains("z") || (true && 0 == 15 / 5 - 3))
+		{
+			print("Hmm...")
+			--grade;
+		}
+		else
+		{
+			++grade;
+		}
+		
 		return "Well done!";
 	}
 }
-
+/*
 class Ying extends Professor
 {
 	boolean onSabbatical = true;
@@ -124,12 +134,12 @@ class Zadia extends Professor
 {
 	
 }
-
+*/
 
 //check to make sure we have:
 //stmts: expression statement
 //many possible cases for expr...
 //cast
-//unary prefixes: multiple, -, ++, --
+//unary prefixes: multiple, -
 //dispatch expr: w/ and w/o chain of dispatches, w/ and w/o args
 //add a dangly thing
