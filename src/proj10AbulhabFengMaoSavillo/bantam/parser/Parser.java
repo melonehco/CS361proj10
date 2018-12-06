@@ -737,7 +737,6 @@ public class Parser
         Expr right = null;
         Expr expr = null;
 
-        //this.currentToken = this.scanner.scan();
         switch (this.currentToken.spelling)
         {
             case "<":
@@ -924,19 +923,18 @@ public class Parser
         int lineNum = this.currentToken.position;
         Expr result = null;
 
-        this.currentToken = this.scanner.scan();
+        this.currentToken = this.scanner.scan(); //scan past CAST
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis in cast expression.");
 
-        this.currentToken = this.scanner.scan();
+        this.currentToken = this.scanner.scan(); //scan past (
         String type = this.parseType();
 
         //check for comma
-        this.currentToken = this.scanner.scan();
         if (this.currentToken.kind != COMMA)
             this.whinge("Expected comma in cast expression.");
 
-        this.currentToken = this.scanner.scan();
+        this.currentToken = this.scanner.scan(); //scan past ,
         Expr castedExpr = this.parseExpression();
         result = new CastExpr(lineNum, type, castedExpr);
 
@@ -944,7 +942,7 @@ public class Parser
         if (this.currentToken.kind != RPAREN)
             this.whinge("Expected closing parenthesis in cast expression.");
 
-        this.currentToken = this.scanner.scan();
+        this.currentToken = this.scanner.scan(); //scan past )
 
         return result;
     }
@@ -1133,7 +1131,9 @@ public class Parser
                 }
                 else if (this.currentToken.kind == LPAREN)
                 {
-                    //dispatch expression
+                	this.currentToken = this.scanner.scan();
+                    
+                	//dispatch expression
                     ExprList arguments = this.parseArguments();
 
                     if (this.currentToken.kind != RPAREN)
@@ -1198,17 +1198,17 @@ public class Parser
         ExprList argList = new ExprList(lineNum);
 
         if (this.currentToken.kind == RPAREN) return argList;
-
+        
         //parse first argument
         argList.addElement(this.parseExpression());
-
+        
         //parse other arguments if present
         while (this.currentToken.kind == COMMA)
         {
             this.currentToken = this.scanner.scan(); //move past comma
             argList.addElement(this.parseExpression());
         }
-
+        
         return argList;
     }
 
