@@ -23,7 +23,6 @@ import org.fxmisc.richtext.StyleClassedTextArea;
 import java.io.File;
 
 
-
 /**
  * Main controller handles actions evoked by the Main window.
  *
@@ -204,9 +203,9 @@ public class Controller
             // Updates the file structure view whenever the tab selection changes
             // e.g., open tab, remove tab, select another tab
             this.javaTabPane.getSelectionModel().selectedItemProperty().addListener((observable, oldTab, newTab) ->
-                                                                                {
-                                                                                    this.updateStructureView();
-                                                                                });
+                                                                                    {
+                                                                                        this.updateStructureView();
+                                                                                    });
         }
     }
 
@@ -242,11 +241,14 @@ public class Controller
         File currentFile = this.javaTabPane.getCurrentFile();
 
         // if the code area is open
-        if (currentCodeArea != null) {
+        if (currentCodeArea != null)
+        {
             // if this is not an unsaved file
             if (currentFile != null)
                 // if this is a java file
-                if (currentFile.getName().endsWith(".java")) {
+                if (currentFile.getName().endsWith(".java") ||
+                        currentFile.getName().endsWith(".btm"))
+                {
                     // Re-generates the tree
                     this.structureViewController.generateStructureTree(currentCodeArea.getText());
                     return;
@@ -344,7 +346,7 @@ public class Controller
     @FXML
     private void handleScanButtonAction(Event event)
     {
-        this.toolbarController.handleScanButtonAction(event, this.javaTabPane.getCurrentFile());
+        this.toolbarController.handleScanButtonAction(event, this.javaTabPane.getCurrentTab());
     }
 
     /**
@@ -353,7 +355,7 @@ public class Controller
     @FXML
     private void handleScanAndParseButtonAction(Event event)
     {
-        this.toolbarController.handleScanAndParseButtonAction(event, this.javaTabPane.getCurrentFile());
+        this.toolbarController.handleScanAndParseButtonAction(event, this.javaTabPane.getCurrentTab());
     }
 
     /**
