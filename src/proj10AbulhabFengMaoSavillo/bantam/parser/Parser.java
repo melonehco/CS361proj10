@@ -1049,132 +1049,146 @@ public class Parser
         Expr primary = null;
 
         //parse the starting primary
-
-        if (this.currentToken.kind == LPAREN)
+        switch (this.currentToken.kind)
         {
-            this.advancePastCommentary();
-            primary = parseExpression();
-
-            if (this.currentToken.kind != RPAREN)
-                this.whinge("Expected closing parenthesis");
-
-            this.advancePastCommentary();
+	        case LPAREN:
+	            this.advancePastCommentary();
+	            primary = parseExpression();
+	
+	            if (this.currentToken.kind != RPAREN)
+	                this.whinge("Expected closing parenthesis");
+	
+	            this.advancePastCommentary();
+	            break;
+	        case INTCONST:
+	            primary = parseIntConst();
+	            break;
+	        case BOOLEAN:
+	            primary = parseBoolean();
+	            break;
+	        case STRCONST:
+	            primary = parseStringConst();
+	            break;
+	        case IDENTIFIER:
+	        {
+	            //check for possible VarExprPrefix
+	            if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
+	            {
+	                //store ref
+	                VarExpr ref = new VarExpr(lineNum, null, this.currentToken.spelling);
+	                this.advancePastCommentary();
+	
+	                //check for dot
+	                if (this.currentToken.kind != DOT)
+	                    this.whinge("Expected a dot");
+	                this.advancePastCommentary();
+	
+	                String name = parseIdentifier();
+	
+	                //brackets indicate array expression
+	                if (this.currentToken.kind == LBRACKET)
+	                {
+	                    primary = parseArrayExprRest(lineNum, ref, name);
+	                }
+	                //otherwise handle general variable expression
+	                else
+	                {
+	                    primary = new VarExpr(lineNum, ref, name);
+	                }
+	            }
+	            //otherwise could be VarExpr or DispatchExpr
+	            else
+	            {
+	                String name = parseIdentifier();
+	
+	                if (this.currentToken.kind == LBRACKET)
+	                {
+	                    //array expression
+	                    primary = parseArrayExprRest(lineNum, null, name);
+	                }
+	                else if (this.currentToken.kind == LPAREN)
+	                {
+	                	this.advancePastCommentary();
+	                    
+	                	//dispatch expression
+	                    ExprList arguments = this.parseArguments();
+	
+	                    if (this.currentToken.kind != RPAREN)
+	                        this.whinge("Expected closing parenthesis in dispatch expression");
+	                    this.advancePastCommentary();
+	
+	                    primary = new DispatchExpr(lineNum, null, name, arguments);
+	                }
+	                else
+	                {
+	                    //var expression
+	                    primary = new VarExpr(lineNum, null, name);
+	                }
+	            }
+	            break;
+	        }
+	        default:
+	            this.whinge("Expected primary");
+	            break;
         }
-        else if (this.currentToken.kind == INTCONST)
-        {
-            primary = parseIntConst();
-        }
-        else if (this.currentToken.kind == BOOLEAN)
-        {
-            primary = parseBoolean();
-        }
-        else if (this.currentToken.kind == STRCONST)
-        {
-            primary = parseStringConst();
-        }
-        else if (this.currentToken.kind == IDENTIFIER)
-        {
-            //check for possible VarExprPrefix
-            if (this.currentToken.spelling.equals("super") || this.currentToken.spelling.equals("this"))
-            {
-                //store ref
-                VarExpr ref = new VarExpr(lineNum, null, this.currentToken.spelling);
-                this.advancePastCommentary();
 
-                //check for dot
-                if (this.currentToken.kind != DOT)
-                    this.whinge("Expected a dot");
-                this.advancePastCommentary();
-
-                String name = parseIdentifier();
-
-                //brackets indicate array expression
-                if (this.currentToken.kind == LBRACKET)
-                {
-                    this.advancePastCommentary();
-                    Expr indexExpr = parseExpression();
-
-                    if (this.currentToken.kind != RBRACKET)
-                        this.whinge("Expected closing bracket");
-                    this.advancePastCommentary();
-
-                    primary = new ArrayExpr(lineNum, ref, name, indexExpr);
-                }
-                //otherwise handle general variable expression
-                else
-                {
-                    primary = new VarExpr(lineNum, ref, name);
-                }
-            }
-            //otherwise could be VarExpr or DispatchExpr
-            else
-            {
-                String name = parseIdentifier();
-
-                if (this.currentToken.kind == LBRACKET)
-                {
-                    /* TODO: this is identical to the previous array expr case
-                     * besides the ref
-                     */
-                    //array expression
-                    this.advancePastCommentary();
-                    Expr indexExpr = parseExpression();
-
-                    if (this.currentToken.kind != RBRACKET)
-                        this.whinge("Expected closing bracket");
-                    this.advancePastCommentary();
-                    primary = new ArrayExpr(lineNum, null, name, indexExpr);
-                }
-                else if (this.currentToken.kind == LPAREN)
-                {
-                	this.advancePastCommentary();
-                    
-                	//dispatch expression
-                    ExprList arguments = this.parseArguments();
-
-                    if (this.currentToken.kind != RPAREN)
-                        this.whinge("Expected closing parenthesis");
-                    this.advancePastCommentary();
-
-                    primary = new DispatchExpr(lineNum, null, name, arguments);
-                }
-                else
-                {
-                    //var expression
-                    primary = new VarExpr(lineNum, null, name);
-                }
-            }
-        }
-        else
-            this.whinge("Expected primary");
-
-        //while there is more to this primary (only dispatch expressions are possible)
+        //parse rest of primary if present (only dispatch expressions are allowed)
         //note: this does not handle being able to access the length of an array
         while (this.currentToken.kind == DOT)
         {
-            this.advancePastCommentary(); //move past DOT
-            lineNum = this.currentToken.position;
-            String name = parseIdentifier();
-
-            //check for opening parenthesis
-            if (this.currentToken.kind != LPAREN)
-                this.whinge("Expected opening parenthesis in dispatch expression");
-
-            this.advancePastCommentary();
-
-            ExprList arguments = this.parseArguments();
-
-            if (this.currentToken.kind != RPAREN)
-                this.whinge("Expected closing parenthesis");
-            this.advancePastCommentary();
-
-            primary = new DispatchExpr(lineNum, primary, name, arguments);
+            primary = parseAdditionalDispatch(primary);
         }
 
         return primary;
     }
 
+    /**
+     * helper method for parsePrimary that parses the rest of an array expression
+     * 
+     * @param lineNum source line number of array expression
+     * @param ref the optional reference object
+     * @param name name of the variable
+     * @return the parsed ArrayExpr
+     */
+    private ArrayExpr parseArrayExprRest(int lineNum, Expr ref, String name)
+    {
+    	this.advancePastCommentary();
+        Expr indexExpr = parseExpression();
 
+        if (this.currentToken.kind != RBRACKET)
+            this.whinge("Expected closing bracket");
+        this.advancePastCommentary();
+
+        return new ArrayExpr(lineNum, ref, name, indexExpr);
+    }
+    
+    /**
+     * helper method for parsePrimary that parses a dispatch expression called
+     * after a dot (note: this method handles the dot)
+     * 
+     * @param ref the optional reference object
+     * @return the parsed DispatchExpr
+     */
+    private DispatchExpr parseAdditionalDispatch(Expr ref)
+    {
+    	this.advancePastCommentary(); //move past DOT
+        int lineNum = this.currentToken.position;
+        String name = parseIdentifier();
+
+        //check for opening parenthesis
+        if (this.currentToken.kind != LPAREN)
+            this.whinge("Expected opening parenthesis in dispatch expression");
+        this.advancePastCommentary();
+
+        ExprList arguments = this.parseArguments();
+
+        //check for closing parenthesis
+        if (this.currentToken.kind != RPAREN)
+            this.whinge("Expected closing parenthesis in dispatch expression");
+        this.advancePastCommentary();
+
+        return new DispatchExpr(lineNum, ref, name, arguments);
+    }
 
     /*
      * <Arguments> ::= EMPTY | <Expression> <MoreArgs>
