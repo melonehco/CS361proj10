@@ -9,7 +9,6 @@
 package proj10AbulhabFengMaoSavillo.controllers;
 
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
 import javafx.concurrent.Service;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import javafx.event.Event;
@@ -25,7 +24,6 @@ import proj10AbulhabFengMaoSavillo.bantam.parser.Parser;
 import proj10AbulhabFengMaoSavillo.bantam.treedrawer.Drawer;
 
 import java.util.List;
-import java.io.*;
 
 import javafx.concurrent.Task;
 
@@ -51,9 +49,6 @@ public class ToolBarController
     private ScanWorker scanWorker;
     private ParseWorker parseWorker;
     private Drawer drawer;
-
-    private BooleanProperty running;
-
 
     /**
      * Initializes the ToolBarController controller.

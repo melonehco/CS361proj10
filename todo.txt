@@ -70,6 +70,4 @@ the file and either the error messages when the file was scanned and parsed or a
 and parsing were successful for that file.
 
 -_INTERNAL_-
-•  In completeLongerToken should we have more error-checking? (Scanner)
-•  Drawer needs to be run better. — when application closed drawer still is running
 •  we’re still not using parseOperator?
