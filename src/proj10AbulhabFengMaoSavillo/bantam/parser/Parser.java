@@ -960,9 +960,7 @@ public class Parser
 
                 //check to make sure not +
                 if (this.currentToken.spelling.equals("+"))
-                {
                     this.whinge("Unexpected + prefix to expression.");
-                }
                 else
                 {
                     this.scanPastCommentary();
