@@ -1,8 +1,8 @@
 /*
 File: StructureViewController.java
-CS361 Project 9
+CS361 Project 10
 Names: Melody Mao, Zena Abulhab, Yi Feng, and Evan Savillo
-Date: 11/20/2018
+Date: 12/6/2018
 */
 
 package proj10AbulhabFengMaoSavillo.controllers;

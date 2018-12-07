@@ -1,8 +1,8 @@
 /*
  * File: Controller.java
- * F18 CS361 Project 9
+ * F18 CS361 Project 10
  * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
- * Date: 11/20/18
+ * Date: 12/6/18
  * This file contains the Main controller class, handling actions evoked by the Main window.
  */
 

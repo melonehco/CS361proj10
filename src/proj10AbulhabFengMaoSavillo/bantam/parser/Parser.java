@@ -8,6 +8,12 @@
  * All other symbols in the rules are terminals.
  * EMPTY indicates a rule with an empty right hand side.
  * All other terminal symbols that are in all caps correspond to keywords.
+ *
+ * --------------------------------------------------------------------
+ * Modification for CS361 Project 10
+ * Authors: Zena Abulhab, Yi Feng, Melody Mao, Evan Savillo
+ * Date: Dec 6, 2018
+ *
  */
 
 package proj10AbulhabFengMaoSavillo.bantam.parser;
@@ -119,7 +125,7 @@ public class Parser
     }
 
     /**
-     * Eats comments
+     * advance to the next token, ignoring comments
      */
     private void advancePastCommentary()
     {
@@ -1167,15 +1173,7 @@ public class Parser
 
         return primary;
     }
-    /*
-     * <Primary> ::= ( <Expression> ) | <IntegerConst> | <BooleanConst> |
-     *                               <StringConst> | <VarExpr> | <DispatchExpr>
-     * <VarExpr> ::= <VarExprPrefix> <Identifier> <VarExprSuffix>
-     * <VarExprPrefix> ::= SUPER . | THIS . | EMPTY
-     * <VarExprSuffix> ::= [ <Expr> ] | EMPTY
-     * <DispatchExpr> ::= <DispatchExprPrefix> <Identifier> ( <Arguments> )
-     * <DispatchExprPrefix> ::= <Primary> . | EMPTY
-     */
+
 
 
     /*
@@ -1284,6 +1282,7 @@ public class Parser
 
     /**
      * helper method to check semicolon
+     * if the current token is not semicolon, report error
      */
     private void checkSemicolon()
     {
@@ -1293,7 +1292,8 @@ public class Parser
     }
 
     /**
-     * Parsing Error occurred!
+     * register the encountered error to the error handler
+     * throw a compilation exception
      *
      * @param errorMessage
      * @throws CompilationException

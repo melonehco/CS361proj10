@@ -1,8 +1,8 @@
 /*
  * File: Scanner.java
- * F18 CS361 Project 9
+ * F18 CS361 Project 10
  * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
- * Date: 11/20/18
+ * Date: 12/6/18
  * This file contains the Scanner class, which reads through a file character by
  * character and generates a stream of Bantam Java tokens.
  */
@@ -10,8 +10,6 @@
 package proj10AbulhabFengMaoSavillo.bantam.lexer;
 
 import java.io.Reader;
-import java.util.ArrayDeque;
-import java.util.List;
 
 import proj10AbulhabFengMaoSavillo.bantam.util.*;
 import proj10AbulhabFengMaoSavillo.bantam.util.Error; //imported explicitly to distinguish from java.lang.Error
