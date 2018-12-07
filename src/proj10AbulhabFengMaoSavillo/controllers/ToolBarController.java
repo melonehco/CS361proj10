@@ -77,9 +77,6 @@ public class ToolBarController
         this.scanWorker.setOnCancelled(event ->
                                        {
                                            ((ScanWorker) event.getSource()).resetFields();
-
-                                           //((ScanWorker)event.getSource()) remove tab?
-                                           console.appendText("\nTask Cancelled\n");
                                        }
         );
 
@@ -113,8 +110,6 @@ public class ToolBarController
         this.parseWorker.setOnCancelled(event ->
                                         {
                                             ((ParseWorker) event.getSource()).resetFields();
-
-                                            console.appendText("\nTask Cancelled\n");
                                         }
         );
     }
