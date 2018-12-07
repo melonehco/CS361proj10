@@ -64,7 +64,9 @@ public class StructureViewController
                                                             new CodeStructureListener(this.treeView.getRoot(),
                                                                                       treeItemLineNumMap);
 
-                                                    this.walker.walk(codeStructureListener, tree);
+                                                    try { this.walker.walk(codeStructureListener, tree); }
+                                                    catch (Exception e) {System.out.println("A strange occurrence");}
+
                                                 });
         this.structureViewWorker.setOnCancelled(event ->
                                                 {
