@@ -628,7 +628,6 @@ public class Scanner
             this.currentChar = this.sourceFile.getNextChar();
         }
 
-        //this.buffer.add(this.currentChar);
 
         //check whether int is too long
         try
@@ -667,8 +666,6 @@ public class Scanner
             spellingBuilder.append(this.currentChar);
             this.currentChar = this.sourceFile.getNextChar();
         }
-
-        //this.buffer.add(this.currentChar);
 
         return new Token(Token.Kind.IDENTIFIER, spellingBuilder.toString(), lineNumber);
     }
