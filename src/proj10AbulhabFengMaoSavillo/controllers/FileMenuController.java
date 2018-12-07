@@ -1,8 +1,8 @@
 /*
  * File: FileMenuController.java
- * F18 CS361 Project 9
+ * F18 CS361 Project 10
  * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
- * Date: 11/20/2018
+ * Date: 12/6/2018
  * This file contains the FileMenuController class, handling File menu related actions.
  */
 

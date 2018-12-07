@@ -3,7 +3,7 @@
  */
 
 class Jaemin extends Dream{
-	int main(String args[]){
+	int main(String[] args){
 		var i = -9;
         var j = 5000;
         var k = 0;

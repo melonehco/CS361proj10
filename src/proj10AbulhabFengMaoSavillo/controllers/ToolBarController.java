@@ -1,8 +1,8 @@
 /*
  * File: ToolBarController.java
- * F18 CS361 Project 9
+ * F18 CS361 Project 10
  * Names: Melody Mao, Zena Abulhab, Yi Feng, Evan Savillo
- * Date: 11/20/2018
+ * Date: 12/6/2018
  * This file contains the ToolBarController class, handling Toolbar related actions.
  */
 
@@ -127,7 +127,7 @@ public class ToolBarController
     }
 
     /**
-     * First ensures the user agrees to save file, then parses the current file.
+     * First ensures the user agrees to save file, then scans and parses the current file.
      *
      * @param event the event triggered
      * @param tab   the current tab
