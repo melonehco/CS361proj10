@@ -135,7 +135,7 @@ public class ToolBarController
      * First ensures the user agrees to save file, then parses the current file.
      *
      * @param event the event triggered
-     * @param tab  the current tab
+     * @param tab   the current tab
      */
     public void handleScanAndParseButtonAction(Event event, JavaTab tab)
     {
@@ -146,10 +146,8 @@ public class ToolBarController
         }
         else
         {
-            if (this.parseWorker.isRunning())
-            {
-                this.parseWorker.cancel();
-            }
+
+            this.parseWorker.cancel();
 
             ErrorHandler errorHandler = new ErrorHandler();
             String filename = tab.getFile().getAbsolutePath();
@@ -166,7 +164,7 @@ public class ToolBarController
      * Handles when the scan button is clicked; the current file is run through a lexical scanner.
      *
      * @param event the event triggered
-     * @param tab  the current tab
+     * @param tab   the current tab
      */
     public void handleScanButtonAction(Event event, JavaTab tab)
     {
@@ -177,10 +175,8 @@ public class ToolBarController
         }
         else
         {
-            if (this.scanWorker.isRunning())
-            {
-                this.scanWorker.cancel();
-            }
+
+            this.scanWorker.cancel();
 
             ErrorHandler errorHandler = new ErrorHandler();
             String filename = tab.getFile().getAbsolutePath();

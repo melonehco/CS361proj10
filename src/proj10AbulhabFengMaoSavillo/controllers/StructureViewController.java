@@ -41,7 +41,6 @@ public class StructureViewController
     private final ParseTreeWalker walker;
     private Map<TreeItem, Integer> treeItemLineNumMap;
     private TreeView<String> treeView;
-    private Thread thread;
     private StructureViewWorker structureViewWorker;
 
     /**
