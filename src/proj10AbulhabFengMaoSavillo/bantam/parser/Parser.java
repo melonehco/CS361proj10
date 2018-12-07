@@ -102,7 +102,7 @@ public class Parser
     public Program parse(String filename)
     {
         this.scanner.setSourceFile(filename);
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         this.filename = filename;
         return (parseProgram());
     }
@@ -127,7 +127,7 @@ public class Parser
     /**
      * advance to the next token, ignoring comments
      */
-    private void advancePastCommentary()
+    private void scanPastCommentary()
     {
         this.currentToken = this.scanner.scan();
         
@@ -135,6 +135,7 @@ public class Parser
         {
             this.currentToken = this.scanner.scan();
         }
+        //this.currentToken = this.scanner.scan();
     }
 
     /*
@@ -151,7 +152,7 @@ public class Parser
 
         if (this.currentToken.kind == CLASS)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             if (this.currentToken.kind == IDENTIFIER)
             {
                 className = this.currentToken.spelling;
@@ -161,14 +162,14 @@ public class Parser
                 this.whinge("Expecting valid class name in class declaration.");
             }
 
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             if (this.currentToken.kind == EXTENDS)
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 if (this.currentToken.kind == IDENTIFIER)
                 {
                     parent = this.currentToken.spelling;
-                    this.advancePastCommentary();
+                    this.scanPastCommentary();
                 }
                 else
                 {
@@ -181,14 +182,14 @@ public class Parser
                 this.whinge("Expected left brace.");
             }
 
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             while (this.currentToken.kind != RCURLY)
             {
                 Member member = parseMember();
                 memberList.addElement(member);
             }
 
-            this.advancePastCommentary();
+            this.scanPastCommentary();
         }
 
         return new Class_(initialPosition, className, className, parent, memberList);
@@ -210,7 +211,7 @@ public class Parser
         //if member matches form for a method
         if (this.currentToken.kind == LPAREN)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             FormalList params = this.parseParameters();
 
             //check for closing parenthesis
@@ -220,7 +221,7 @@ public class Parser
             }
             else //if present, move on to next token
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
             }
 
             BlockStmt block = (BlockStmt) this.parseBlock();
@@ -239,7 +240,7 @@ public class Parser
             else if (this.currentToken.kind == ASSIGN)
             {
                 //non-empty initial value
-                this.advancePastCommentary(); //read past =
+                this.scanPastCommentary(); //read past =
                 Expr initValueExpr = this.parseExpression();
 
                 //check for semicolon
@@ -259,7 +260,7 @@ public class Parser
             }
 
             //move past ending semicolon
-            this.advancePastCommentary();
+            this.scanPastCommentary();
         }
 
         return member;
@@ -279,7 +280,7 @@ public class Parser
         if (this.currentToken.kind != LCURLY)
             this.whinge("Expected opening brace");
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         StmtList stmtList = new StmtList(lineNum);
         while (this.currentToken.kind != RCURLY)
@@ -292,7 +293,7 @@ public class Parser
         }
         blockStmt = new BlockStmt(lineNum, stmtList);
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return blockStmt;
     }
@@ -314,7 +315,7 @@ public class Parser
             {
         		String name = ((VarExpr) (expr)).getName();
         		Expr ref = ((VarExpr) (expr)).getRef();
-        		
+
         		//if ref is given, get its name
                 String refName = null;
                 if (ref != null)
@@ -326,7 +327,7 @@ public class Parser
                     refName = ((VarExpr) ref).getName();
                 }
 
-                this.advancePastCommentary(); //move past ASSIGN
+                this.scanPastCommentary(); //move past ASSIGN
                 Expr assignedExpr = parseExpression();
 
                 expr = new AssignExpr(lineNum, refName, name, assignedExpr);
@@ -336,7 +337,7 @@ public class Parser
             	String name = ((ArrayExpr) (expr)).getName();
             	Expr ref = ((ArrayExpr) (expr)).getRef();
             	Expr indexExpr = ((ArrayExpr) (expr)).getIndex();
-        		
+
         		//if ref is given, get its name
                 String refName = null;
                 if (ref != null)
@@ -348,7 +349,7 @@ public class Parser
                     refName = ((VarExpr) ref).getName();
                 }
 
-                this.advancePastCommentary(); //move past ASSIGN
+                this.scanPastCommentary(); //move past ASSIGN
                 Expr assignedExpr = parseExpression();
 
                 expr = new ArrayAssignExpr(lineNum, refName, name, indexExpr, assignedExpr);
@@ -377,7 +378,7 @@ public class Parser
         while (this.currentToken.kind == COMMA)
         {
 
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             Formal formal = parseFormal();
             formalList.addElement(formal);
         }
@@ -395,14 +396,14 @@ public class Parser
 
         if (currentToken.kind == LBRACKET) // check for brackets
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
 
             if (currentToken.kind != RBRACKET)
                 this.whinge("Expected closing bracket");
 
             type += "[]";
 
-            this.advancePastCommentary();
+            this.scanPastCommentary();
         }
 
         return type;
@@ -415,7 +416,7 @@ public class Parser
 
         String identifier = this.currentToken.getSpelling();
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return identifier;
     }
@@ -465,15 +466,15 @@ public class Parser
     {
         int lineNum = this.currentToken.position;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind == LPAREN)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             Expr expr = parseExpression();
 
             if (this.currentToken.kind == RPAREN)
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Stmt stmt = parseStatement();
 
                 return new WhileStmt(lineNum, expr, stmt);
@@ -495,7 +496,7 @@ public class Parser
         Expr expr = null;
         int lineNum = this.currentToken.position;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind != SEMICOLON)
         {
             expr = parseExpression();
@@ -503,7 +504,7 @@ public class Parser
         }
         else
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
         }
 
         return new ReturnStmt(lineNum, expr);
@@ -515,7 +516,7 @@ public class Parser
     private Stmt parseBreak()
     {
         int lineNum = this.currentToken.position;
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         checkSemicolon();
 
         return new BreakStmt(lineNum);
@@ -545,14 +546,14 @@ public class Parser
     {
         int lineNum = this.currentToken.position;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind == IDENTIFIER)
         {
             String identifier = parseIdentifier();
 
             if (this.currentToken.kind == ASSIGN)
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr expr = parseExpression();
                 this.checkSemicolon();
 
@@ -581,18 +582,18 @@ public class Parser
 
         int lineNum = this.currentToken.position;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis");
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind != SEMICOLON)
         {
             start = parseExpression();
             this.checkSemicolon();
         }
         else
-            this.advancePastCommentary();
+            this.scanPastCommentary();
 
         if (this.currentToken.kind != SEMICOLON)
         {
@@ -600,7 +601,7 @@ public class Parser
             this.checkSemicolon();
         }
         else
-            this.advancePastCommentary();
+            this.scanPastCommentary();
 
         if (this.currentToken.kind != RPAREN)
         {
@@ -609,10 +610,10 @@ public class Parser
             if (this.currentToken.kind != RPAREN)
                 this.whinge("Expected closing parenthesis");
             else
-                this.advancePastCommentary();
+                this.scanPastCommentary();
         }
         else
-            this.advancePastCommentary();
+            this.scanPastCommentary();
 
         Stmt bodyStmt = parseStatement();
 
@@ -630,22 +631,22 @@ public class Parser
 
         int lineNum = currentToken.position;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis");
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         expr = parseExpression();
 
         if (this.currentToken.kind != RPAREN)
             this.whinge("Expected closing parenthesis");
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
         thenStmt = parseStatement();
 
         if (this.currentToken.kind == ELSE)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             elseStmt = parseStatement();
         }
 
@@ -663,7 +664,7 @@ public class Parser
         Expr left = parseAndExpr();
         while (this.currentToken.spelling.equals("||"))
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             Expr right = parseAndExpr();
             left = new BinaryLogicOrExpr(lineNum, left, right);
         }
@@ -682,7 +683,7 @@ public class Parser
         Expr left = parseEqualityExpr();
         while (this.currentToken.spelling.equals("&&"))
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             Expr right = parseEqualityExpr();
             left = new BinaryLogicAndExpr(lineNum, left, right);
         }
@@ -704,13 +705,13 @@ public class Parser
 
         if (this.currentToken.spelling.equals("=="))
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             right = parseRelationalExpr();
             expr = new BinaryCompEqExpr(lineNum, left, right);
         }
         else if (this.currentToken.spelling.equals("!="))
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             right = parseRelationalExpr();
             expr = new BinaryCompNeExpr(lineNum, left, right);
         }
@@ -736,27 +737,27 @@ public class Parser
         switch (this.currentToken.spelling)
         {
             case "<":
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 right = parseAddExpr();
                 expr = new BinaryCompLtExpr(lineNum, left, right);
                 break;
             case ">":
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 right = parseAddExpr();
                 expr = new BinaryCompGtExpr(lineNum, left, right);
                 break;
             case "<=":
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 right = parseAddExpr();
                 expr = new BinaryCompLeqExpr(lineNum, left, right);
                 break;
             case ">=":
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 right = parseAddExpr();
                 expr = new BinaryCompGeqExpr(lineNum, left, right);
                 break;
             case "INSTANCEOF":
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 String type = parseType();
                 expr = new InstanceofExpr(lineNum, left, type);
                 break;
@@ -780,13 +781,13 @@ public class Parser
         {
             if (this.currentToken.spelling.equals("+"))
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr right = parseMultExpr();
                 left = new BinaryArithPlusExpr(lineNum, left, right);
             }
             else if (this.currentToken.spelling.equals("-"))
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr right = parseMultExpr();
                 left = new BinaryArithMinusExpr(lineNum, left, right);
             }
@@ -814,19 +815,19 @@ public class Parser
             {
                 case "*":
                     //multiply
-                    this.advancePastCommentary();
+                    this.scanPastCommentary();
                     right = this.parseNewCastOrUnary();
                     result = new BinaryArithTimesExpr(lineNum, result, right);
                     break;
                 case "/":
                     //divide
-                    this.advancePastCommentary();
+                    this.scanPastCommentary();
                     right = this.parseNewCastOrUnary();
                     result = new BinaryArithDivideExpr(lineNum, result, right);
                     break;
                 case "%":
                     //modulo
-                    this.advancePastCommentary();
+                    this.scanPastCommentary();
                     right = this.parseNewCastOrUnary();
                     result = new BinaryArithModulusExpr(lineNum, result, right);
                     break;
@@ -866,7 +867,7 @@ public class Parser
         int lineNum = this.currentToken.position;
         Expr result = null;
 
-        this.advancePastCommentary(); //move past NEW
+        this.scanPastCommentary(); //move past NEW
         String type = this.parseIdentifier();
 
         //handle new object
@@ -875,20 +876,20 @@ public class Parser
             result = new NewExpr(lineNum, type);
 
             //check for closing parenthesis
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             if (this.currentToken.kind != RPAREN)
             {
                 this.whinge("Expected closing parenthesis in new object expression.");
             }
             else
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
             }
         }
         //handle new array
         else if (this.currentToken.kind == LBRACKET)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             Expr size = this.parseExpression();
 
             result = new NewArrayExpr(lineNum, type, size);
@@ -900,7 +901,7 @@ public class Parser
             }
             else
             {
-                this.advancePastCommentary();
+                this.scanPastCommentary();
             }
         }
         else
@@ -919,17 +920,17 @@ public class Parser
         int lineNum = this.currentToken.position;
         Expr result = null;
 
-        this.advancePastCommentary(); //scan past CAST
+        this.scanPastCommentary(); //scan past CAST
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis in cast expression.");
 
-        this.advancePastCommentary(); //scan past (
+        this.scanPastCommentary(); //scan past (
         String type = this.parseType();
 
         //check for comma
         if (this.currentToken.kind != COMMA)
             this.whinge("Expected comma in cast expression.");
-        this.advancePastCommentary(); //scan past ,
+        this.scanPastCommentary(); //scan past ,
         
         Expr castedExpr = this.parseExpression();
         result = new CastExpr(lineNum, type, castedExpr);
@@ -938,7 +939,7 @@ public class Parser
         if (this.currentToken.kind != RPAREN)
             this.whinge("Expected closing parenthesis in cast expression.");
 
-        this.advancePastCommentary(); //scan past )
+        this.scanPastCommentary(); //scan past )
 
         return result;
     }
@@ -964,7 +965,7 @@ public class Parser
                 }
                 else
                 {
-                    this.advancePastCommentary();
+                    this.scanPastCommentary();
                     Expr innerPrefix = this.parseUnaryPrefix();
                     result = new UnaryNegExpr(lineNum, innerPrefix);
                 }
@@ -972,7 +973,7 @@ public class Parser
             case UNARYNOT:
             {
                 //unary not
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr innerPrefix = this.parseUnaryPrefix();
                 result = new UnaryNotExpr(lineNum, innerPrefix);
                 break;
@@ -980,7 +981,7 @@ public class Parser
             case UNARYINCR:
             {
                 //pre-increment
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr innerPrefix = this.parseUnaryPrefix();
                 result = new UnaryIncrExpr(lineNum, innerPrefix, false);
                 break;
@@ -988,7 +989,7 @@ public class Parser
             case UNARYDECR:
             {
                 //pre-decrement
-                this.advancePastCommentary();
+                this.scanPastCommentary();
                 Expr innerPrefix = this.parseUnaryPrefix();
                 result = new UnaryDecrExpr(lineNum, innerPrefix, false);
                 break;
@@ -1015,13 +1016,13 @@ public class Parser
 
         if (this.currentToken.kind == UNARYINCR)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             //post-increment
             result = new UnaryIncrExpr(lineNum, primary, true);
         }
         else if (this.currentToken.kind == UNARYDECR)
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             //post-decrement
             result = new UnaryDecrExpr(lineNum, primary, true);
         }
@@ -1052,13 +1053,13 @@ public class Parser
         switch (this.currentToken.kind)
         {
 	        case LPAREN:
-	            this.advancePastCommentary();
+	            this.scanPastCommentary();
 	            primary = parseExpression();
 	
 	            if (this.currentToken.kind != RPAREN)
 	                this.whinge("Expected closing parenthesis");
 	
-	            this.advancePastCommentary();
+	            this.scanPastCommentary();
 	            break;
 	        case INTCONST:
 	            primary = parseIntConst();
@@ -1076,12 +1077,12 @@ public class Parser
 	            {
 	                //store ref
 	                VarExpr ref = new VarExpr(lineNum, null, this.currentToken.spelling);
-	                this.advancePastCommentary();
+	                this.scanPastCommentary();
 	
 	                //check for dot
 	                if (this.currentToken.kind != DOT)
 	                    this.whinge("Expected a dot");
-	                this.advancePastCommentary();
+	                this.scanPastCommentary();
 	
 	                String name = parseIdentifier();
 	
@@ -1108,14 +1109,14 @@ public class Parser
 	                }
 	                else if (this.currentToken.kind == LPAREN)
 	                {
-	                	this.advancePastCommentary();
+	                	this.scanPastCommentary();
 	                    
 	                	//dispatch expression
 	                    ExprList arguments = this.parseArguments();
 	
 	                    if (this.currentToken.kind != RPAREN)
 	                        this.whinge("Expected closing parenthesis in dispatch expression");
-	                    this.advancePastCommentary();
+	                    this.scanPastCommentary();
 	
 	                    primary = new DispatchExpr(lineNum, null, name, arguments);
 	                }
@@ -1152,12 +1153,12 @@ public class Parser
      */
     private ArrayExpr parseArrayExprRest(int lineNum, Expr ref, String name)
     {
-    	this.advancePastCommentary();
+    	this.scanPastCommentary();
         Expr indexExpr = parseExpression();
 
         if (this.currentToken.kind != RBRACKET)
             this.whinge("Expected closing bracket");
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return new ArrayExpr(lineNum, ref, name, indexExpr);
     }
@@ -1171,21 +1172,21 @@ public class Parser
      */
     private DispatchExpr parseAdditionalDispatch(Expr ref)
     {
-    	this.advancePastCommentary(); //move past DOT
+    	this.scanPastCommentary(); //move past DOT
         int lineNum = this.currentToken.position;
         String name = parseIdentifier();
 
         //check for opening parenthesis
         if (this.currentToken.kind != LPAREN)
             this.whinge("Expected opening parenthesis in dispatch expression");
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         ExprList arguments = this.parseArguments();
 
         //check for closing parenthesis
         if (this.currentToken.kind != RPAREN)
             this.whinge("Expected closing parenthesis in dispatch expression");
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return new DispatchExpr(lineNum, ref, name, arguments);
     }
@@ -1207,7 +1208,7 @@ public class Parser
         //parse other arguments if present
         while (this.currentToken.kind == COMMA)
         {
-            this.advancePastCommentary(); //move past comma
+            this.scanPastCommentary(); //move past comma
             argList.addElement(this.parseExpression());
         }
         
@@ -1235,12 +1236,12 @@ public class Parser
 
         if (this.currentToken.kind == LBRACKET)  // optional brackets
         {
-            this.advancePastCommentary();
+            this.scanPastCommentary();
             if (this.currentToken.kind != RBRACKET)
                 this.whinge("Expected closing bracket");
 
             type += "[]";
-            this.advancePastCommentary();
+            this.scanPastCommentary();
         }
 
         if (this.currentToken.kind == IDENTIFIER)
@@ -1257,7 +1258,7 @@ public class Parser
     {
         String operator = this.currentToken.spelling;
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return operator;
     }
@@ -1267,7 +1268,7 @@ public class Parser
         int lineNum = this.currentToken.position;
         String constant = this.currentToken.getSpelling();
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return new ConstStringExpr(lineNum, constant);
     }
@@ -1278,7 +1279,7 @@ public class Parser
         int lineNum = this.currentToken.position;
         String constant = this.currentToken.getSpelling();
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return new ConstIntExpr(lineNum, constant);
     }
@@ -1289,7 +1290,7 @@ public class Parser
         int lineNum = this.currentToken.position;
         String constant = this.currentToken.getSpelling();
 
-        this.advancePastCommentary();
+        this.scanPastCommentary();
 
         return new ConstBooleanExpr(lineNum, constant);
     }
@@ -1302,7 +1303,7 @@ public class Parser
     {
         if (this.currentToken.kind != SEMICOLON)
             this.whinge("Expected semicolon");
-        this.advancePastCommentary();
+        this.scanPastCommentary();
     }
 
     /**
