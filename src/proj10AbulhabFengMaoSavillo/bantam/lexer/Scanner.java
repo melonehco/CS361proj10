@@ -252,8 +252,10 @@ public class Scanner
         if (isTokenComplete)
         {
             String spelling = Character.toString(this.currentChar);
+            int lineNum = this.sourceFile.getCurrentLineNumber();
+
             this.currentChar = this.sourceFile.getNextChar();
-            return new Token(kind, spelling, this.sourceFile.getCurrentLineNumber());
+            return new Token(kind, spelling, lineNum);
         }
         else
             return null;
@@ -404,8 +406,10 @@ public class Scanner
         //append closing quote
         spellingBuilder.append(Character.toString(this.currentChar));
 
+        int linenum = this.sourceFile.getCurrentLineNumber();
+
         this.currentChar = this.sourceFile.getNextChar();
-        return new Token(kind, spellingBuilder.toString(), this.sourceFile.getCurrentLineNumber());
+        return new Token(kind, spellingBuilder.toString(), linenum);
     }
 
     /**

@@ -18,7 +18,7 @@ class Winwin
         for(; i < 2; i++)
         {
             theTruth = theTruth && everything[i]
-        }
+     }
 
         return theTruth;
     }
