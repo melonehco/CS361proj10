@@ -54,6 +54,11 @@ public class StructureViewController
 
         this.structureViewWorker.setOnSucceeded(event ->
                                                 {
+                                                    /*
+                                                    On successful lexing and parsing by antlr, walk the completed
+                                                    root node
+                                                    */
+
                                                     //System.out.println("Succeeded\n");
                                                     ParseTree tree =
                                                             ((StructureViewWorker) event.getSource()).getValue();
@@ -72,7 +77,6 @@ public class StructureViewController
                                                     //System.out.println("Cancelled");
                                                     ((StructureViewWorker) event.getSource()).resetFields();
                                                 });
-
 
     }
 
@@ -125,7 +129,7 @@ public class StructureViewController
      */
     public void generateStructureTree(String fileContents)
     {
-        /* Sometimes a Thread state exception occurs here. Have been unable to replicate.*/
+        /* Sometimes a Thread state exception occurs here. Have been unable to replicate. */
         this.structureViewWorker.cancel();
 
         TreeItem<String> newRoot = new TreeItem<>(fileContents);
@@ -157,6 +161,10 @@ public class StructureViewController
         this.setRootNode(null);
     }
 
+    /**
+     * An implementation of a Worker which starts antlr's lexing and parsing
+     * in another thread.
+     */
     protected class StructureViewWorker extends Service<ParseTree>
     {
         private String fileContents;
@@ -171,6 +179,11 @@ public class StructureViewController
             this.fileContents = null;
         }
 
+        /**
+         * Lexes and parses file set as input
+         *
+         * @return root node of completed parse tree
+         */
         @Override
         protected Task<ParseTree> createTask()
         {
