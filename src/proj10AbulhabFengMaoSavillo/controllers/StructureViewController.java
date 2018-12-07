@@ -125,6 +125,7 @@ public class StructureViewController
      */
     public void generateStructureTree(String fileContents)
     {
+        /* Sometimes a Thread state exception occurs here. Have been unable to replicate.*/
         this.structureViewWorker.cancel();
 
         TreeItem<String> newRoot = new TreeItem<>(fileContents);

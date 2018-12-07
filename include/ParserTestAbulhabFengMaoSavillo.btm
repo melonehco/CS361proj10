@@ -46,7 +46,7 @@ class Dale extends Professor
 		{
 			newCode = oldCode + "improvements";
 		}
-		
+	
 		return newCode;
 	}
 }
@@ -137,6 +137,64 @@ class Ying extends Professor
 }
 
 class Zadia extends Professor
-{
+{}
+
+class Bruce extends Professor/*loremipsum*/
+/*loremipsum*/{
+	int numAlpacas = 15;
+	int numLlamas/*loremipsum*/ = 1/*loremipsum*/;
+	int numBurros = 2;
+	int numTurkeys = 1;
 	
+	String/*loremipsum*/[] fixSegFaults/*loremipsum*/()
+	{
+		/*loremipsum*/var solutions = new String[numLlamas + numTurkeys];
+		var /*loremipsum*/i = 0;
+		var j = 0;
+		var k/*loremipsum*/ = 0;
+		
+		super.classes = new String/*loremipsum*/[/*loremipsum*/5/*loremipsum*/];
+		
+		for (i = 0; i < 7; i++)
+		{
+			super.classes[i] = "more CS";
+			solutions[i] = "stack overflow";
+		}
+		
+		for (; i <= 14; i++)
+		{
+			for (j = 0;; j--)
+			{
+				if (j > -7)
+					break;
+				
+				for (k = 0; k >= 7;)
+				{
+					k--;
+				}
+			}
+		}
+		
+		return solutions;
+	}
+	
+	String shear/*loremipsum*/()
+	{
+		var/*loremipsum*/tooCold = false;
+		if (this.numAlpacas == 15 && !tooCold)
+		{
+			/*loremipsum*/this.numTurkeys = this.numTurkeys * 3 / 2  + (this.numBurros % 1);
+			return/*loremipsum*/ "snip snip"/*loremipsum*/;
+		}
+		else
+		{
+			return "wait wait";
+		}
+	}
+	
+	/*loremipsum*/Professor hire(/*loremipsum*/)
+	{
+		return new/*loremipsum*/ Professor(/*loremipsum*/)/*loremipsum*/;
+	}
+
 }

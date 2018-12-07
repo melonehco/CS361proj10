@@ -1,7 +1,3 @@
-/*
-    int lorem = 6009;
-    String ipsum = "dolor sit amet";
- */
 class Winwin
 {
     void main(String[] args)
