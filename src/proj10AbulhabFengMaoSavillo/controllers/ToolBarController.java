@@ -63,6 +63,11 @@ public class ToolBarController
         this.scanWorker = new ScanWorker();
         this.scanWorker.setOnSucceeded(event ->
                                        {
+                                           /*
+                                           On success, get the completed value, which is a string
+                                           to be 'printed' to the console informing the user
+                                           of the results
+                                            */
                                            ((ScanWorker) event.getSource()).resetFields();
 
                                            // Clear the console before printing
@@ -82,6 +87,14 @@ public class ToolBarController
         this.parseWorker = new ParseWorker();
         this.parseWorker.setOnSucceeded(event ->
                                         {
+                                            /*
+                                           On success, get the completed value, which is a string
+                                           to be 'printed' to the console informing the user
+                                           of the results
+
+                                           If the parse is error free, also draws the tree
+                                            */
+
                                             if (((ParseWorker) event.getSource()).isErrorFree)
                                             {
                                                 String filename = ((ParseWorker) event.getSource()).filename;
@@ -141,7 +154,7 @@ public class ToolBarController
         }
         else
         {
-
+            // cancel any currently running parse
             this.parseWorker.cancel();
 
             ErrorHandler errorHandler = new ErrorHandler();
@@ -150,6 +163,8 @@ public class ToolBarController
             this.parseWorker.setErrorHandler(errorHandler);
             this.parseWorker.setFilename(filename);
 
+
+            // prime the state, then restart
             this.parseWorker.reset();
             this.parseWorker.restart();
         }
@@ -170,7 +185,6 @@ public class ToolBarController
         }
         else
         {
-
             this.scanWorker.cancel();
 
             ErrorHandler errorHandler = new ErrorHandler();
@@ -201,11 +215,13 @@ public class ToolBarController
 
     /**
      * Parse Worker which manages the Task of creating a Parser, parsing a scanned file,
-     * and reporting results
+     * and reporting the results (viz the root node and whether or not parsing encountered errors
      */
     protected static class ParseWorker extends Service<String>
     {
-        public boolean isErrorFree; // whether or not there were no errors parsing, so a tree will be drawn
+        public boolean isErrorFree; /* whether or not there were any errors parsing,
+                                        determining whether or not a tree will be drawn
+                                      */
         private ErrorHandler errorHandler;
         private String filename;
         private Parser parser;
@@ -230,6 +246,11 @@ public class ToolBarController
             this.errorHandler = errorHandler;
         }
 
+        /**
+         * Attempts to parse the file as set before (re)starting this worker
+         *
+         * @return
+         */
         @Override
         protected Task<String> createTask()
         {
@@ -334,10 +355,6 @@ public class ToolBarController
                         Token currentToken = scanner.scan();
                         while (currentToken.kind != Token.Kind.EOF)
                         {
-                        /*
-                            output area will be null if this was called from ParseWorker,
-                            i.e. the Scan n Parse button was pressed
-                         */
                             if (outputArea != null)
                             {
                                 String s = currentToken.toString();
