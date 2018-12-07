@@ -78,7 +78,6 @@ public class StructureViewController
                                                     ((StructureViewWorker) event.getSource()).resetFields();
                                                 });
 
-
     }
 
     /**

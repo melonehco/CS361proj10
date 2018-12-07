@@ -163,7 +163,6 @@ public class ToolBarController
             this.parseWorker.setErrorHandler(errorHandler);
             this.parseWorker.setFilename(filename);
 
-
             // prime the state, then restart
             this.parseWorker.reset();
             this.parseWorker.restart();
