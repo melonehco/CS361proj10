@@ -705,7 +705,6 @@ public class Parser
         Expr right = null;
         Expr expr = null;
 
-        //this.currentToken = scanner.scan();
         if (this.currentToken.spelling.equals("=="))
         {
             this.currentToken = this.scanner.scan();
@@ -933,8 +932,8 @@ public class Parser
         //check for comma
         if (this.currentToken.kind != COMMA)
             this.whinge("Expected comma in cast expression.");
-
         this.currentToken = this.scanner.scan(); //scan past ,
+        
         Expr castedExpr = this.parseExpression();
         result = new CastExpr(lineNum, type, castedExpr);
 
@@ -1152,8 +1151,8 @@ public class Parser
         else
             this.whinge("Expected primary");
 
-        //while there is more to this primary
-        //TODO: I think that after this point only dispatch expressions are possible
+        //while there is more to this primary (only dispatch expressions are possible)
+        //note: this does not handle being able to access the length of an array
         while (this.currentToken.kind == DOT)
         {
             this.currentToken = this.scanner.scan(); //move past DOT

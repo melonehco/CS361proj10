@@ -8,7 +8,7 @@
  * to be instances of the Professor class instead of subclasses, but
  * this setup seemed more amusing.
  */
-/*
+
 class Professor
 {
 	String[] classes;
@@ -50,7 +50,7 @@ class Dale extends Professor
 		return newCode;
 	}
 }
-*/
+
 class Bruce extends Professor
 {
 	int numAlpacas = 15;
@@ -109,7 +109,7 @@ class Bruce extends Professor
 		return new Professor();
 	}
 }
-/*
+
 class Stephanie extends Professor
 {
 	String sendProjectFeedback(String studentName, int grade)
@@ -140,4 +140,3 @@ class Zadia extends Professor
 {
 	
 }
-*/
