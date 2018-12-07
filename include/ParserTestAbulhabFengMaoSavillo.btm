@@ -51,6 +51,97 @@ class Dale extends Professor
 	}
 }
 
+class Stephanie extends Professor
+{
+	String sendProjectFeedback(String studentName, int grade)
+	{
+		if (studentName.contains("z") || (true && 0 == 15 / 5 - 3))
+		{
+			var sameName = cast(String, studentName);
+			var nameIsString = sameName instanceof String;
+			print(sameName, grade);
+			--grade;
+		}
+		else
+		{
+			++--++grade;
+		}
+		
+		studentName.toLowerCase().substring(0, 5).charAt();
+		
+		return "Well done!";
+	}
+}
+
+class Ying extends Professor
+{
+	boolean onSabbatical = true;
+}
+
+class Zadia extends Professor
+{}
+
+//the following version of the Bruce class tests have comments in arbitrary places
+class Bruce extends Professor/*loremipsum*/
+/*loremipsum*/{
+	int numAlpacas = 15;
+	int numLlamas/*loremipsum*/ = 1/*loremipsum*/;
+	int numBurros = 2;
+	int numTurkeys = 1;
+	
+	String/*loremipsum*/[] fixSegFaults/*loremipsum*/()
+	{
+		/*loremipsum*/var solutions = new String[numLlamas + numTurkeys];
+		var /*loremipsum*/i = 0;
+		var j = 0;
+		var k/*loremipsum*/ = 0;
+		
+		super.classes = new String/*loremipsum*/[/*loremipsum*/5/*loremipsum*/];
+		
+		for (i = 0; i < 7; i++)
+		{
+			super.classes[i] = "more CS";
+			solutions[i] = "stack overflow";
+		}
+		
+		for (; i <= 14; i++)
+		{
+			for (j = 0;; j--)
+			{
+				if (j > -7)
+					break;
+				
+				for (k = 0; k >= 7;)
+				{
+					k--;
+				}
+			}
+		}
+		
+		return solutions;
+	}
+	
+	String shear/*loremipsum*/()
+	{
+		var/*loremipsum*/tooCold = false;
+		if (this.numAlpacas == 15 && !tooCold)
+		{
+			/*loremipsum*/this.numTurkeys = this.numTurkeys * 3 / 2  + (this.numBurros % 1);
+			return/*loremipsum*/ "snip snip"/*loremipsum*/;
+		}
+		else
+		{
+			return "wait wait";
+		}
+	}
+	
+	/*loremipsum*/Professor hire(/*loremipsum*/)
+	{
+		return new/*loremipsum*/ Professor(/*loremipsum*/)/*loremipsum*/;
+	}
+}
+
+/* less comment-ridden version of the Bruce class
 class Bruce extends Professor
 {
 	int numAlpacas = 15;
@@ -109,92 +200,4 @@ class Bruce extends Professor
 		return new Professor();
 	}
 }
-
-class Stephanie extends Professor
-{
-	String sendProjectFeedback(String studentName, int grade)
-	{
-		if (studentName.contains("z") || (true && 0 == 15 / 5 - 3))
-		{
-			var sameName = cast(String, studentName);
-			print(sameName, grade);
-			--grade;
-		}
-		else
-		{
-			++--++grade;
-		}
-		
-		studentName.toLowerCase().substring(0, 5).charAt();
-		
-		return "Well done!";
-	}
-}
-
-class Ying extends Professor
-{
-	boolean onSabbatical = true;
-}
-
-class Zadia extends Professor
-{}
-
-class Bruce extends Professor/*loremipsum*/
-/*loremipsum*/{
-	int numAlpacas = 15;
-	int numLlamas/*loremipsum*/ = 1/*loremipsum*/;
-	int numBurros = 2;
-	int numTurkeys = 1;
-	
-	String/*loremipsum*/[] fixSegFaults/*loremipsum*/()
-	{
-		/*loremipsum*/var solutions = new String[numLlamas + numTurkeys];
-		var /*loremipsum*/i = 0;
-		var j = 0;
-		var k/*loremipsum*/ = 0;
-		
-		super.classes = new String/*loremipsum*/[/*loremipsum*/5/*loremipsum*/];
-		
-		for (i = 0; i < 7; i++)
-		{
-			super.classes[i] = "more CS";
-			solutions[i] = "stack overflow";
-		}
-		
-		for (; i <= 14; i++)
-		{
-			for (j = 0;; j--)
-			{
-				if (j > -7)
-					break;
-				
-				for (k = 0; k >= 7;)
-				{
-					k--;
-				}
-			}
-		}
-		
-		return solutions;
-	}
-	
-	String shear/*loremipsum*/()
-	{
-		var/*loremipsum*/tooCold = false;
-		if (this.numAlpacas == 15 && !tooCold)
-		{
-			/*loremipsum*/this.numTurkeys = this.numTurkeys * 3 / 2  + (this.numBurros % 1);
-			return/*loremipsum*/ "snip snip"/*loremipsum*/;
-		}
-		else
-		{
-			return "wait wait";
-		}
-	}
-	
-	/*loremipsum*/Professor hire(/*loremipsum*/)
-	{
-		return new/*loremipsum*/ Professor(/*loremipsum*/)/*loremipsum*/;
-	}
-
-}
+*/

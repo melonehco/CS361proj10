@@ -756,7 +756,7 @@ public class Parser
                 right = parseAddExpr();
                 expr = new BinaryCompGeqExpr(lineNum, left, right);
                 break;
-            case "INSTANCEOF":
+            case "instanceof":
                 this.scanPastCommentary();
                 String type = parseType();
                 expr = new InstanceofExpr(lineNum, left, type);
