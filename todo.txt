@@ -13,7 +13,7 @@ for handling operators.
 
 [COMPLETED]•  Your scanner doesn’t accept “\”” as a legal string token.
 
-•  Your use of a buffer in the scan() method is not the most elegant way to implement the method. You can
+[COMPLETED]•  Your use of a buffer in the scan() method is not the most elegant way to implement the method. You can
 get rid of the buffer if you just fix the scan method so that it has the following invariant: The value of
 this.currentChar at the end of the scan() method is always the first character of the rest of the source file
 (that is, that part of the source file after the previous Token was returned). So make sure that, before
