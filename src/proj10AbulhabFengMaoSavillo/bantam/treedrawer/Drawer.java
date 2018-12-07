@@ -19,6 +19,7 @@ package proj10AbulhabFengMaoSavillo.bantam.treedrawer;
 
 import proj10AbulhabFengMaoSavillo.bantam.ast.Program;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class Drawer
@@ -33,6 +34,9 @@ public class Drawer
     {
         DrawerPanel panel = new DrawerPanel();
         DrawerFrame frame = new DrawerFrame(sourceName, panel);
+
+        // please excuse the following transgression:
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         Font font = new Font("SansSerif", Font.PLAIN, 12);
         frame.setFont(font);
