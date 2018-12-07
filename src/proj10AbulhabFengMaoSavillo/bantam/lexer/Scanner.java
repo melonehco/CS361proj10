@@ -99,7 +99,6 @@ public class Scanner
                 while (currentToken.kind != Token.Kind.EOF)
                 {
                     System.out.println(currentToken.spelling);
-                    //System.out.println(currentToken);
                     currentToken = scanner.scan();
                 }
             }
