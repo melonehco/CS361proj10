@@ -55,8 +55,7 @@ public class StructureViewController
 
         this.structureViewWorker.setOnSucceeded(event ->
                                                 {
-                                                    System.out.println("Succeeded\n");
-
+                                                    //System.out.println("Succeeded\n");
                                                     ParseTree tree =
                                                             ((StructureViewWorker) event.getSource()).getValue();
 
@@ -66,19 +65,13 @@ public class StructureViewController
                                                                                       treeItemLineNumMap);
 
                                                     this.walker.walk(codeStructureListener, tree);
-                                                    //((StructureViewWorker) event.getSource()).resetFields();
                                                 });
-
         this.structureViewWorker.setOnCancelled(event ->
                                                 {
-                                                    System.out.println("Cancelled");
+                                                    //System.out.println("Cancelled");
                                                     ((StructureViewWorker) event.getSource()).resetFields();
                                                 });
 
-        this.structureViewWorker.setOnReady(event -> System.out.println("Ready"));
-        this.structureViewWorker.setOnRunning(event -> System.out.println("Running"));
-        this.structureViewWorker.setOnScheduled(event -> System.out.println("Scheduled"));
-        this.structureViewWorker.setOnFailed(event -> System.out.println("Failed"));
 
     }
 
